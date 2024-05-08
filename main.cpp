@@ -10,6 +10,9 @@
 #include <dxgidebug.h>
 #pragma comment(lib,"dxguid.lib")
 
+#include<dxcapi.h>
+#pragma comment(lib,"dxcompiler.lib")
+
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 
@@ -61,6 +64,33 @@ void Log(const std::string& message)
 {
 	OutputDebugStringA(message.c_str());
 }
+
+IDxcBlob* CompileShader(
+	// CompilerするShaderファイルへのパス
+	const std::wstring& filePath,
+	// Compilerに使用するPrfile
+	const wchar_t* profile,
+	// 初期化で生成したものを3つ
+	IDxcUtils* dxcUtils,
+	IDxcCompiler3* dxcCompiler,
+	IDxcIncludeHandler* includeHandler)
+{
+	// これからシェーダーをコンパイルする旨をログに出す
+	Log(ConvertString(std::format(L"Begin CompileShader,path{},profile:{}\n", filePath, profile)));
+	// hlslファイルを読む
+	IDxcBlobEncoding* shaderSources = nullptr;
+	HRESULT hr = dxcUtils->LoadFile(filePath.c_str(), nullptr, &shaderSources);
+	// 読めなかったら止める
+	assert(SUCCEEDED(hr));
+	// 読み込んだファイルの内容を設定する
+	DxcBuffer shaderSourcesBuffer;
+	shaderSourcesBuffer.Ptr = shaderSources->GetBufferPointer();
+	shaderSourcesBuffer.Size = shaderSources->GetBufferSize();
+	shaderSourcesBuffer.Encoding = DXC_CP_UTF8;// UTF8の文字コードであることを通知
+
+
+}
+
 
 //Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
@@ -294,6 +324,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	assert(fenceEvent != nullptr);
 
 #pragma endregion
+
+	// dxcCompilerを初期化
+	IDxcUtils* dxcUtils = nullptr;
+	IDxcCompiler3* dxcCompiler = nullptr;
+	hr = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&dxcUtils));
+	assert(SUCCEEDED(hr));
+	hr = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&dxcCompiler));
+	assert(SUCCEEDED(hr));
+
+	// 現時点でincludeはしないが、includeに対応するための設定を行っておく
+	IDxcIncludeHandler* includeHandler = nullptr;
+	hr = dxcUtils->CreateDefaultIncludeHandler(&includeHandler);
+	assert(SUCCEEDED(hr));
 
 	MSG msg{};
 	//ウィンドウの×ボタンが押されるまでループ
