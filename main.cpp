@@ -16,13 +16,10 @@
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 
-struct Vector4
-{
-	float x;
-	float y;
-	float z;
-	float w;
-};
+
+#include<cmath>
+#include "math.h"
+
 
 
 // ウィンドウプロシージャ
@@ -154,7 +151,7 @@ ID3D12Resource* CreateBufferResource(ID3D12Device*device, size_t sizeInBytes) {
 	// バッファリソース,テクスチャの場合はまた別の設定をする
 	vertexResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 	vertexResourceDesc.Width = sizeof(Vector4) * 3;//リソースのサイズ。今回はVector4を3頂点分
-	// バッファの場合はこれらは1にする決まり
+	vertexResourceDesc.Width = sizeof(Matrix4x4);	// バッファの場合はこれらは1にする決まり
 	vertexResourceDesc.Height = 1;
 	vertexResourceDesc.DepthOrArraySize = 1;
 	vertexResourceDesc.MipLevels = 1;
@@ -170,6 +167,9 @@ ID3D12Resource* CreateBufferResource(ID3D12Device*device, size_t sizeInBytes) {
 
 	return vertexResource;
 }
+
+Transform transform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
+
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
@@ -435,10 +435,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
 	// RootPrameter作成。複数設定できるので配列。今回は結果1つだけなので長さ1の配列
-	D3D12_ROOT_PARAMETER rootParameter[1] = {};
+	D3D12_ROOT_PARAMETER rootParameter[2] = {};
 	rootParameter[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;  // CBVを使う
 	rootParameter[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;  // PixelShaderで使う
 	rootParameter[0].Descriptor.ShaderRegister = 0;  // レジスタ番号0とバインド
+	rootParameter[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;  // CBVを使う
+	rootParameter[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;  // PixelShaderで使う
+	rootParameter[1].Descriptor.ShaderRegister = 0;  // レジスタ番号0とバインド
 	descriptionRootSignature.pParameters = rootParameter;  // ルートパラメータ配列へのポインタ
 	descriptionRootSignature.NumParameters = _countof(rootParameter);  // 配列の長さ
 
@@ -553,7 +556,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	materialResource ->Map(0, nullptr, reinterpret_cast<void**>(&materialDate));
 	// 今回は赤を書き込んでみる
 	*materialDate = Vector4(1.0f, 0.0f, 0.0f, 1.0f);
-	
+
+	// WVP用のリソースを作る。Matrix4x4 1つ分のサイズを用意する
+	ID3D12Resource* wvpResources = CreateBufferResource(device, sizeof(Matrix4x4));
+	// データを書き込む
+	Matrix4x4* wvpDate = nullptr;
+	// 書き込むためのアドレスを取得
+	wvpResources->Map(0, nullptr, reinterpret_cast<void**>(&wvpDate));
+	// 単位行列を書き込んでおく
+	*wvpDate = MakeIdentity4x4();
 
 	// ビューポート
 	D3D12_VIEWPORT viewport{};
@@ -584,6 +595,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}
 		else {
 			// ゲームの処理
+			transform.rotate.y += 0.03f;
+			Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translata);
+			*wvpDate = worldMatrix;
+
+			Matrix4x4 cameraMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translata);
+			Matrix4x4 viewMatrix = Inverse(cameraMatrix);
+			Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix();
+
+			Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 
 			// これから書き込むバックバッファのインデックスを取得
 			UINT backBufferIndex = swapChain->GetCurrentBackBufferIndex();
@@ -623,6 +643,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			// マテリアルCBufferの場所を設定
 			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
 
+			// wvp用のCBufferの場所を設定
+			commandList->SetGraphicsRootConstantBufferView(1, wvpResources->GetGPUVirtualAddress());
+			
 			// 描画
 			commandList->DrawInstanced(3, 1, 0, 0);
 
@@ -667,6 +690,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}
 	}
 
+	wvpResources->Release();
 	materialResource->Release();
 	vertexResources->Release();
 	graphicsPipelineState->Release();
