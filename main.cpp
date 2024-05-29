@@ -2,28 +2,21 @@
 #include <cstdint>
 #include <string>
 #include <format>
-
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <cassert>
-
 #include<dxgidebug.h>
 #pragma comment(lib,"dxguid.lib")
-
 #include<dxcapi.h>
 #pragma comment(lib,"dxcompiler.lib")
-
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
-
 #include<cmath>
 #include "math.h"
-
 #include "externals/imgui/imgui.h"
 #include "externals/imgui/imgui_impl_dx12.h"
 #include "externals/imgui/imgui_impl_win32.h"
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
 
 
 // ウィンドウプロシージャ
@@ -623,6 +616,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
 
+
 	MSG msg{};
 	// ウィンドウの×ボタンが押されるまでループ
 	while (msg.message != WM_QUIT) {
@@ -638,7 +632,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			ImGui::NewFrame();
 
 			// ゲームの処理
-			transform.rotate.y += 0.03f;
+			//transform.rotate.y += 0.03f;
 			Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translata);
 			*wvpDate = worldMatrix;
 
@@ -649,10 +643,28 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			*wvpDate = worldViewProjectionMatrix;
 
 			// 開発用UIの処理。実際の開発用のUIを出す場合はここをゲーム固有の処理に置き換える
-			ImGui::ShowDemoWindow();
+			//ImGui::ShowDemoWindow();
 
 			ImGui::Begin("Color Picker");
-			ImGui::ColorEdit4("Text Color With Flags", &materialDate->x, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaBar);
+			// 色変更
+			if (ImGui::CollapsingHeader("Color")) {
+				ImGui::ColorEdit4("Color", &materialDate->x);
+			}
+			ImGui::Separator();
+			// オブジェクト変更
+			if (ImGui::CollapsingHeader("Object")) {
+				// 大きさ変更
+				ImGui::DragFloat3("Scale", &transform.scale.x, 0.01f);
+				// 回転変更
+				ImGui::DragFloat3("Rotate", &transform.rotate.x, 0.01f);
+				// 移動
+				ImGui::DragFloat3("Translate", &transform.translata.x, 0.01f);
+				// リセット
+				if (ImGui::Button("Delete")) {
+					transform = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f} ,{0.0f,0.0f,0.0f} };
+				}
+			}
+
 			ImGui::End();
 				
 			// ImGuiの内部コマンドを生成する
