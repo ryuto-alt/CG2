@@ -823,7 +823,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		else {
 			//ゲームの処理
 #pragma region Transformを使ってCBufferを更新する
-			transform.rotate.y += 0.03f;
+			/*transform.rotate.y += 0.03f;*/
 			Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translata);
 			Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translata);
 			Matrix4x4 viewMatrix = Inverse(cameraMatrix);
@@ -835,25 +835,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			ImGui_ImplDX12_NewFrame();
 			ImGui_ImplWin32_NewFrame();
 			ImGui::NewFrame();
-			ImGui::Begin("Settings");
-
-			// Color Edit ウィンドウ
-			if (ImGui::CollapsingHeader("SetColor")) {
-				ImGui::ColorEdit4("materialData", &materialData->x);
-			}
-			ImGui::Separator();
-
-			// Translation ウィンドウ
-			if (ImGui::CollapsingHeader("Object")) {
-				ImGui::DragFloat3("Translation", &transform.translata.x, 0.01f);
-				ImGui::DragFloat3("Rotation", &transform.rotate.x, 0.01f);
-				ImGui::DragFloat2("Scale", &transform.scale.x, 0.01f);
-				if (ImGui::Button("Reset Transform")) {
-					transform = { {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} };
-				}
-			}
-			ImGui::Separator();
+			ImGui::Begin("Color Picker");
+			ImGui::ColorEdit4("Text Color With Flags", &materialData->x, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaBar);
 			ImGui::End();
+
+			// ImGuiウィンドウの作成
+			ImGui::Begin("Transform Controls");
+			ImGui::SliderFloat3("Position", &transform.translata.x, -5.0f, 5.0f);
+			ImGui::SliderFloat3("Rotation", &transform.rotate.x, -180.0f, 180.0f);
+			ImGui::SliderFloat3("Scale", &transform.scale.x, 0.1f, 2.0f);
+			ImGui::End();
+
 			ImGui::Render();
 
 #pragma region コマンドを積み込み確定させる
