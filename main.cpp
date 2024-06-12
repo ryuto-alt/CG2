@@ -29,7 +29,12 @@ struct VertexData {
 	Vector2 texcoord;
 };
 
-
+// Transform構造体の定義
+struct Transformmm {
+	Vector3 scale;
+	Vector3 rotate;
+	Vector3 translate;
+};
 
 
 // ウィンドウプロシージャ
@@ -136,7 +141,7 @@ IDxcBlob* CompileShader(
 }
 
 #pragma region Transform変数を作る
-Transform transform{ {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} };
+Transformmm transform{ {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} };
 #pragma endregion
 
 #pragma region DIscriptorHEap関数
@@ -773,7 +778,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 			// ImGuiウィンドウの作成
 			ImGui::Begin("Transform Controls");
-			ImGui::SliderFloat3("Position", &transform.translata.x, -5.0f, 5.0f);
+			ImGui::SliderFloat3("Position", &transform.translate.x, -5.0f, 5.0f);
 			ImGui::SliderFloat3("Rotation", &transform.rotate.x, -180.0f, 180.0f);
 			ImGui::SliderFloat3("Scale", &transform.scale.x, 0.1f, 2.0f);
 			ImGui::End();
@@ -784,9 +789,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 			/*transform.rotate.y += 0.03f;*/
 
-			Transform cameraTransform{ {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, -5.0f} };
-			Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translata);
-			Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translata);
+			Transformmm cameraTransform{ {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, -5.0f} };
+			Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translate);
+			Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translate);
 			Matrix4x4 viewMatrix = Inverse(cameraMatrix);
 			Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
 			Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));

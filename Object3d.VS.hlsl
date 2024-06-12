@@ -1,11 +1,11 @@
-#include "object3d.hlsli"
-
+#include"object3d.hlsli"
 
 struct TransformationMatrix
 {
     float32_t4x4 WVP;
 };
 ConstantBuffer<TransformationMatrix> gTransformationMatrix : register(b0);
+
 
 struct VertexShaderInput
 {
@@ -20,3 +20,5 @@ VertexShaderOutput main(VertexShaderInput input)
     output.texcoord = input.texcoord;
     return output;
 }
+
+
