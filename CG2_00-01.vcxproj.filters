@@ -78,9 +78,6 @@
     <ClInclude Include="externals\imgui\imstb_truetype.h">
       <Filter>imgui</Filter>
     </ClInclude>
-    <ClInclude Include="math\Matrix.h">
-      <Filter>math</Filter>
-    </ClInclude>
     <ClInclude Include="math\Matrix4x4.h">
       <Filter>math</Filter>
     </ClInclude>
