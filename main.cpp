@@ -49,7 +49,7 @@ Transform transformSprite{
 };
 
 const float pi = 3.14159265358979323846f;
-const int kSubdivision = 16; // 適切な分割数を設定してください
+const int kSubdivision = 16; // 適切な分割数を設定してください。
 
 // 頂点データの配列
 std::vector<VertexData> vertexData(kSubdivision* kSubdivision * 6);
