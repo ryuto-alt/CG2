@@ -826,16 +826,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #pragma region 球体
 	// 経度分割1つ分の角度 φ
 	const float kLonEvery = pi * 2.0f / float(kSubdivision);
-	// 緯度分割1つ分の角度 θ
 	const float kLatEvery = pi / float(kSubdivision);
 
 	// 緯度の方向に分割
-	for (int latIndex = 0; latIndex < kSubdivision; ++latIndex) {
+	for (int latIndex = 0; latIndex <= kSubdivision; ++latIndex) {
 		float lat = -pi / 2.0f + kLatEvery * latIndex; // φ
 
 		// 経度の方向に分割しながら頂点を操作
-		for (int lonIndex = 0; lonIndex < kSubdivision; ++lonIndex) {
-			uint32_t start = (latIndex * kSubdivision + lonIndex) * 6;
+		for (int lonIndex = 0; lonIndex <= kSubdivision; ++lonIndex) {
+			uint32_t start = (latIndex * (kSubdivision + 1) + lonIndex) * 6;
 			float lon = lonIndex * kLonEvery; // θ
 
 			// 頂点データを入力する
@@ -939,7 +938,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #pragma region Transformを使ってCBufferを更新する
 			// 変換行列の計算部分を修正する
 			transform.rotate.y += 0.03f;  // 回転速度を調整する場合はここを変更
-			Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translata);
+			Matrix4x4 worldMatrix = MakeRotateYMatrix(transform.rotate.y);
 			Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translata);
 			Matrix4x4 viewMatrix = Inverse(cameraMatrix);
 			Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, 1280.0f / 720.0f, 0.1f, 100.0f);
