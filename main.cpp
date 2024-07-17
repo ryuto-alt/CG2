@@ -227,7 +227,7 @@ Transform transform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f } };
 #pragma endregion
 
 #pragma region cameraTransform変数
-Transform cameraTransform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,-5.0f} };
+Transform cameraTransform{ {1.5f,1.5f,1.5f},{0.0f,0.0f,0.0f},{0.0f,0.0f,-5.0f} };
 #pragma endregion
 
 
@@ -790,22 +790,23 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	DirectionalLight* directionalLightData = nullptr;
 	// デフォルト値はとりあえず以下のようにしておく
 	directionalLight->Map(0, nullptr, reinterpret_cast<void**>(&directionalLightData));
-	directionalLightData->color = { 0.0f, 1.0f, 1.0f, 1.0f };
-	directionalLightData->direction = { 0.0f, -1.0f, 0.0f };
+	directionalLightData->color = { 1.0f, 1.0f, 1.0f, 1.0f };
+	directionalLightData->direction = { 0.0f, -4.0f, 0.0f };
 	directionalLightData->intensity = 1.0f;
+	
 
 
 
 
 #pragma region TransformationMatrix用のResourceを作る
 	// TransformationMatrix用のResourceを作る
-	ID3D12Resource* transformationMatrixResource = CreateBufferResource(device, (sizeof(Matrix4x4) + 255) & ~255);
-	ID3D12Resource* directionalLightResource = CreateBufferResource(device, (sizeof(DirectionalLight) + 255) & ~255);
+	ID3D12Resource* transformationMatrixResource = CreateBufferResource(device, (sizeof(TransformationMatrix) ));
+	//ID3D12Resource* directionalLightResource = CreateBufferResource(device, (sizeof(DirectionalLight) + 255) & ~255);
 
 	Matrix4x4* transformationMatrixData = nullptr;
 
 	transformationMatrixResource->Map(0, nullptr, reinterpret_cast<void**>(&transformationMatrixData));
-	directionalLightResource->Map(0, nullptr, reinterpret_cast<void**>(&directionalLightData));
+//	directionalLightResource->Map(0, nullptr, reinterpret_cast<void**>(&directionalLightData));
 
 	*transformationMatrixData = MakeIdentity4x4();
 #pragma endregion
@@ -871,9 +872,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	// Sprite用のTransformationMatrix用のリソースを作る。Matrix4x4 1つ分のサイズを用意する
 	ID3D12Resource* transformationMatrixResourceSprite = CreateBufferResource(device, sizeof(Matrix4x4));
-
-
-
 	// データを書き込む
 	Matrix4x4* transformationMatrixDataSprite = nullptr;
 	// 書き込むためのアドレスを取得
@@ -1091,7 +1089,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		else {
 			//ゲームの処理
 #pragma region Transformを使ってCBufferを更新する
-			transform.rotate.y += 0.03f;  // 回転速度を調整する場合はここを変更
+			transform.rotate.y += 0.02f;  // 回転速度を調整する場合はここを変更
 			Matrix4x4 worldMatrix = MakeRotateYMatrix(transform.rotate.y);
 			Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translata);
 			Matrix4x4 viewMatrix = Inverse(cameraMatrix);
@@ -1114,16 +1112,23 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			ImGui::NewFrame();
 
 			// マテリアルの色変更UI
-			ImGui::Begin("Material Color");
-			ImGui::ColorEdit4("Color", &materialData->color.x);
+			ImGui::Begin("Sprite Color");
+			ImGui::ColorEdit4("Color", &materialDataSprite->color.x);
+
+			ImGui::ColorEdit4("LightSetColor", &(directionalLightData->color.x));
+			ImGui::SliderFloat3("Lightdirection", &(directionalLightData->direction.x), -10.0f, 10.0f);
+			ImGui::SliderFloat("Light Intensity", &(directionalLightData->intensity), 0, 100);
 			ImGui::End();
 
-			// ImGuiのライティング強度設定をfloatからintに変更
-			ImGui::Begin("Lighting Controls");
-			ImGui::ColorEdit4("LightSetColor", &(directionalLightData->color.x));
-			ImGui::DragFloat3("Lightdirection", &(directionalLightData->direction.x), 0.01f, -1.0f, 300.0f);
-			ImGui::SliderFloat("Light Intensity", &(directionalLightData->intensity), 0, 10);
-			ImGui::End();
+			///*ImGui::Begin("Material Color");
+			//ImGui::ColorEdit4("Color", &materialData->color.x);
+			//ImGui::End();*/
+			//// ImGuiのライティング強度設定をfloatからintに変更
+			//ImGui::Begin("Lighting Controls");
+			//ImGui::ColorEdit4("LightSetColor", &(directionalLightData->color.x));
+			//ImGui::DragFloat3("Lightdirection", &(directionalLightData->direction.x));
+			//ImGui::SliderFloat("Light Intensity", &(directionalLightData->intensity), 0, 100);
+			//ImGui::End();
 
 			ImGui::Render();
 
@@ -1168,11 +1173,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 #pragma region CBVを設定する
 			commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
+			//commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
+
 			commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResource->GetGPUVirtualAddress());
 			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
-	//		commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU2);
-			//commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
-			commandList->SetGraphicsRootConstantBufferView(3, directionalLight->GetGPUVirtualAddress());
+			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU2);
 
 
 #pragma endregion
@@ -1181,6 +1186,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #pragma endregion
 
 
+			commandList->SetGraphicsRootConstantBufferView(3, directionalLight->GetGPUVirtualAddress());
 			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
 			commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResourceSprite->GetGPUVirtualAddress());
 
