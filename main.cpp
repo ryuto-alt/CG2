@@ -1177,7 +1177,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 			commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResource->GetGPUVirtualAddress());
 			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
-			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU2);
+			//commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU2);
 
 
 #pragma endregion
