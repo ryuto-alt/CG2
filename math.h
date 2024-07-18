@@ -255,3 +255,7 @@ Matrix4x4 MakePerspectiveFovMatrix(float fovY, float aspectRatio, float nearClip
 	result.m[3][3] = 0.0f;
 	return result;
 }
+struct VertexData {
+	Vector4 position;
+	Vector2 texcoord;
+};
