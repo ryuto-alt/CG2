@@ -1140,7 +1140,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			ImGui::NewFrame();
 			// Gui
 			{
-				ImGui::Begin("TestWindow");
+				ImGui::Begin("Imgui");
 				ImGui::DragFloat3("transformSprite", &transformSprite.translata.x, 1.0f);
 				ImGui::SliderFloat3("scale", &transform.scale.x, 0.0f, 5.0f);
 				ImGui::SliderFloat3("rotate", &transform.rotate.x, -3.14f, 3.14f);
