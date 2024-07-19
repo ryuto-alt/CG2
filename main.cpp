@@ -73,7 +73,7 @@ const int32_t kClientHeight = 720;
 
 
 const float pi = 3.14159265358979323846f;
-const int kSubdivision = 512; // 適切な分割数を設定してください。
+const int kSubdivision = 128; // 適切な分割数を設定してください。
 
 // 頂点データの配列
 std::vector<VertexData> vertexData(kSubdivision* kSubdivision * 6);
@@ -189,32 +189,7 @@ ID3D12DescriptorHeap* CreateDescriptorHeap(ID3D12Device* device, D3D12_DESCRIPTO
 	return descriptorHeap;
 }
 
-//// Resource作成の関数化
-//ID3D12Resource* CreateBufferResource(ID3D12Device* device, size_t sizeInBytes)
-//{
-//	//頂点リソース用のヒープ設定
-//	D3D12_HEAP_PROPERTIES uploadHeapProperties{};
-//	uploadHeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;	//UploadHeapを使う
-//	//頂点リソースの設定
-//	D3D12_RESOURCE_DESC vertexResourceDesc{};
-//	//バッファリソース。テクスチャの場合はまた別の設定をする
-//	vertexResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-//	vertexResourceDesc.Width = sizeInBytes;				//リソースのサイズ
-//	//バッファの場合はこれらは1にする決まり
-//	vertexResourceDesc.Height = 1;
-//	vertexResourceDesc.DepthOrArraySize = 1;
-//	vertexResourceDesc.MipLevels = 1;
-//	vertexResourceDesc.SampleDesc.Count = 1;
-//	//バッファの場合はこれにする決まり
-//	vertexResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-//	//実際に頂点リソースを作る
-//	ID3D12Resource* vertexResource = nullptr;
-//	HRESULT hr = device->CreateCommittedResource(&uploadHeapProperties, D3D12_HEAP_FLAG_NONE,
-//		&vertexResourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-//		IID_PPV_ARGS(&vertexResource));
-//	assert(SUCCEEDED(hr));
-//	return vertexResource;
-//}
+
 
 
 // CompilerShader関数
@@ -397,6 +372,8 @@ ID3D12Resource* CreateDepthStencilTextureResource(ID3D12Device* device, int32_t 
 	assert(SUCCEEDED(hr));
 	return resource;
 }
+
+
 
 //CPUのDescriptorHandleを取得する関数
 D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(ID3D12DescriptorHeap* descriptorHeap, uint32_t descriptorSize, uint32_t index)
@@ -848,6 +825,26 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	materialData->enableLighting = true;
 #pragma endregion
 
+
+#pragma region Index用のあれやこれやを作る
+	ID3D12Resource* indexResourceSprite = CreateBufferResource(device, sizeof(uint32_t) * 6);
+	D3D12_INDEX_BUFFER_VIEW indexBufferViewSprite{};
+	//リソースの先頭アドレスから使う
+	indexBufferViewSprite.BufferLocation = indexResourceSprite->GetGPUVirtualAddress();
+	//使用するリソースサイズはインデックス６つ分のサイズ
+	indexBufferViewSprite.SizeInBytes = sizeof(uint32_t) * 6;
+	//インデックスはuint32_tとする
+	indexBufferViewSprite.Format = DXGI_FORMAT_R32_UINT;
+
+	//インデックスリソースにデータを書き込む
+	uint32_t* indexDataSprite = nullptr;
+	indexResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&indexDataSprite));
+	indexDataSprite[0] = 0; indexDataSprite[1] = 1; indexDataSprite[2] = 2;
+	indexDataSprite[4] = 4; indexDataSprite[5] = 5; indexDataSprite[6] = 6;
+
+#pragma endregion
+
+
 #pragma region スプライト用のマテリアルリソースを作成し設定する処理を行う
 	//スプライト用のマテリアルソースを作る
 	ID3D12Resource* materialResourceSprite = CreateBufferResource(device, sizeof(Material));
@@ -974,7 +971,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 #pragma region 球体の頂点データを格納するためのバッファリソースを生成
 	//分割数
-	uint32_t kSubdivision = 20;
+	uint32_t kSubdivision = 64;
 	//データ量
 	uint32_t ToralIndex = kSubdivision * kSubdivision * 6;
 	//Resource作成の関数化
@@ -1000,27 +997,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	VertexData* vertexData = nullptr;
 	//書き込むためのアドレスを取得
 	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
-	////左下
-	//vertexData[0].position = { -0.5f,-0.5f,0.0f,1.0f };
-	//vertexData[0].texcoord = { 0.0f,1.0f };
-	////上
-	//vertexData[1].position = { 0.0f,0.5f,0.0f,1.0f };
-	//vertexData[1].texcoord = { 0.5f,0.0f };
-	////右下
-	//vertexData[2].position = { 0.5f,-0.5f,0.0f,1.0f };
-	//vertexData[2].texcoord = { 1.0f,1.0f };
-
-	////左下2
-	//vertexData[3].position = { -0.5f,-0.5f,0.5f,1.0f };
-	//vertexData[3].texcoord = { 0.0f,1.0f };
-	////上2
-	//vertexData[4].position = { 0.0f,0.0f,0.0f,1.0f };
-	//vertexData[4].texcoord = { 0.5f,0.0f };
-	////右下2
-	//vertexData[5].position = { 0.5f,-0.5f,-0.5f,1.0f };
-	//vertexData[5].texcoord = { 1.0f,1.0f };
-	// Resourceにデータを書き込む・頂点データの更新
-
 	// 球の頂点数を計算する
 	//経度分割1つ分の角度 Φd
 	const float kLonEvery = pi * 2.0f / float(kSubdivision);
@@ -1220,8 +1196,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			commandList->SetPipelineState(graphicsPipelineState);		// パイプラインステートオブジェクト (PSO) を設定
 
 			//頂点バッファの設定とプリミティブトポロジの設定
-			commandList->IASetVertexBuffers(0, 1, &vertexBufferView);					//VBVを設定
+			commandList->IASetVertexBuffers(0, 1, &vertexBufferView);					//VBVを設定	
 			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);	//プリミティブトポロジを設定
+			commandList->IASetIndexBuffer(&indexBufferViewSprite);
 
 			//定数バッファビュー (CBV) とディスクリプタテーブルの設定
 			//マテリアルCBufferの場所を設定
@@ -1229,7 +1206,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());							// WVP用CBVを設定
 			commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);	// SRVのディスクリプタテーブルを設定
 			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());			// ライトのCBVを設定
-			commandList->DrawInstanced(ToralIndex, 1, 0, 0);																// 描画コール。三角形を描画
+			commandList->DrawInstanced(ToralIndex, 1, 0, 0);	// 描画コール。三角形を描画
+			commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
 			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
 
