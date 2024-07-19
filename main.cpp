@@ -19,6 +19,7 @@
 
 
 #include "math.h"
+#include"Matrix3x3.h"
 #include "externals/imgui/imgui.h"
 #include "externals/imgui/imgui_impl_dx12.h"
 #include "externals/imgui/imgui_impl_win32.h"
@@ -47,7 +48,12 @@ struct Material {
 
 	Vector4 color;
 	int32_t enableLighting;
+	float padding[3];
+	Matrix4x4 uvTransform;
+	
 };
+
+
 struct DirectionalLight {
 	Vector4 color;
 	Vector3 direction;
@@ -63,6 +69,12 @@ struct TransformationMatrix {
 
 
 Transform transformSprite{
+	{1.0f, 1.0f, 1.0f},  // スケール
+	{0.0f, 0.0f, 0.0f},  // 回転
+	{0.0f, 0.0f, 0.0f}   // 位置
+};
+
+Transform uvTransformSprite{
 	{1.0f, 1.0f, 1.0f},  // スケール
 	{0.0f, 0.0f, 0.0f},  // 回転
 	{0.0f, 0.0f, 0.0f}   // 位置
@@ -823,6 +835,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	//今回は赤を書き込んでみる
 	materialData->color = { 1.0f, 1.0f, 1.0f, 1.0f };
 	materialData->enableLighting = true;
+	materialData->uvTransform = MakeIdentity4x4();
+	
 #pragma endregion
 
 
@@ -854,6 +868,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	materialDataSprite->color = { 1.0f, 1.0f, 1.0f, 1.0f };
 	//SpriteはLightingしないのでfalseを設定する
 	materialDataSprite->enableLighting = false;
+
+	materialDataSprite->uvTransform = MakeIdentity4x4();
+
 #pragma endregion
 
 #pragma region 平行光源のプロパティ 色 方向 強度 を格納するバッファリソースを生成しその初期値を設定
@@ -1121,6 +1138,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 				ImGui::SliderFloat3("scale", &transform.scale.x, 0.0f, 5.0f);
 				ImGui::SliderFloat3("rotate", &transform.rotate.x, -3.14f, 3.14f);
 				ImGui::SliderFloat3("transrate", &transform.translata.x, -10.0f, 10.0f);
+				ImGui::DragFloat2("UVTranslate", &uvTransformSprite.translata.x, 0.01f, -10.0f, 10.0f);
+				ImGui::DragFloat2("UVScale", &uvTransformSprite.scale.x, 0.01f, -10.0f, 10.0f);
+				ImGui::SliderAngle("UVRotate", &uvTransformSprite.rotate.z);
+				
 				ImGui::Checkbox("useMonsterBall", &useMonsterBall);
 				ImGui::SliderFloat3("directionalLight", &directionalLightData->direction.x, -1.0f, 1.0f);
 				ImGui::End();
@@ -1138,7 +1159,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			Matrix4x4 viewMatrix = Inverse(camraMatrix);
 			Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
 			Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
-
+			
+			
 			wvpData->WVP = worldViewProjectionMatrix;
 			wvpData->world = worldMatrix;
 
@@ -1147,6 +1169,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			Matrix4x4 viewMatrixSprite = MakeIdentity4x4();
 			Matrix4x4 projectionMatrixSprite = MakeOrthographicMatrix(0.0f, 0.0f, float(kClientWidth), float(kClientHeight), 0.0f, 100.0f);
 			Matrix4x4 worldViewProjectionMatrixSprite = Multiply(worldMatrixSprite, Multiply(viewMatrixSprite, projectionMatrixSprite));
+			Matrix4x4 uvTransformMatrix = MakeScaleMatrix(uvTransformSprite.scale);
+			uvTransformMatrix = Multiply(uvTransformMatrix, MakeRotateZMatrix(uvTransformSprite.rotate.z));
+			uvTransformMatrix = Multiply(uvTransformMatrix, MakeTranslateMatrix(uvTransformSprite.translata));
+			materialDataSprite->uvTransform = uvTransformMatrix;
 
 			transformationMatrixDataSprite->WVP = worldViewProjectionMatrixSprite;
 			transformationMatrixDataSprite->world = worldMatrix;
@@ -1203,10 +1229,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			//定数バッファビュー (CBV) とディスクリプタテーブルの設定
 			//マテリアルCBufferの場所を設定
 			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());					// マテリアルCBVを設定
+			
 			commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());							// WVP用CBVを設定
 			commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);	// SRVのディスクリプタテーブルを設定
 			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());			// ライトのCBVを設定
 			commandList->DrawInstanced(ToralIndex, 1, 0, 0);	// 描画コール。三角形を描画
+			
+
 			commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
 			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);

@@ -4,6 +4,7 @@ struct Material
 {
     float4 color;
     int enableLighting;
+    float32_t4x4 uvTransform;
 };
 
 //平行光源
@@ -40,6 +41,9 @@ PixelShaderOutput main(VertexShaderOutput input)
         float NdotL = dot(normalize(input.normal), -gDirectionalLight.direction);
         float cos = pow(NdotL * 0.5f + 0.5f, 2.0f);
        
+        float4 transformedUV = mul(float32_t4(input.texcoord,0.0f, 1.0f), gMaterial.uvTransform);
+        float32_t4 textureColor = gTexture.Sample(gSampler, transformedUV.xy);
+        
         output.color = gMaterial.color * textureColor * gDirectionalLight.color * cos * gDirectionalLight.intensity;
     }
     else
