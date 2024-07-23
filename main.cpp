@@ -50,7 +50,7 @@ struct Material {
 	int32_t enableLighting;
 	float padding[3];
 	Matrix4x4 uvTransform;
-	
+
 };
 
 
@@ -835,8 +835,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	//今回は赤を書き込んでみる
 	materialData->color = { 1.0f, 1.0f, 1.0f, 1.0f };
 	materialData->enableLighting = true;
-	materialData->uvTransform = MakeIdentity4x4();
-	
+
+
 #pragma endregion
 
 
@@ -869,6 +869,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	//SpriteはLightingしないのでfalseを設定する
 	materialDataSprite->enableLighting = false;
 
+
+	materialData->uvTransform = MakeIdentity4x4();
 	materialDataSprite->uvTransform = MakeIdentity4x4();
 
 #pragma endregion
@@ -1135,13 +1137,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			{
 				ImGui::Begin("Imgui");
 				ImGui::DragFloat3("transformSprite", &transformSprite.translata.x, 1.0f);
-				ImGui::SliderFloat3("scale", &transform.scale.x, 0.0f, 5.0f);
-				ImGui::SliderFloat3("rotate", &transform.rotate.x, -3.14f, 3.14f);
-				ImGui::SliderFloat3("transrate", &transform.translata.x, -10.0f, 10.0f);
 				ImGui::DragFloat2("UVTranslate", &uvTransformSprite.translata.x, 0.01f, -10.0f, 10.0f);
 				ImGui::DragFloat2("UVScale", &uvTransformSprite.scale.x, 0.01f, -10.0f, 10.0f);
 				ImGui::SliderAngle("UVRotate", &uvTransformSprite.rotate.z);
-				
+
 				ImGui::Checkbox("useMonsterBall", &useMonsterBall);
 				ImGui::SliderFloat3("directionalLight", &directionalLightData->direction.x, -1.0f, 1.0f);
 				ImGui::End();
@@ -1159,8 +1158,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			Matrix4x4 viewMatrix = Inverse(camraMatrix);
 			Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
 			Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
-			
-			
+
+
 			wvpData->WVP = worldViewProjectionMatrix;
 			wvpData->world = worldMatrix;
 
@@ -1169,6 +1168,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			Matrix4x4 viewMatrixSprite = MakeIdentity4x4();
 			Matrix4x4 projectionMatrixSprite = MakeOrthographicMatrix(0.0f, 0.0f, float(kClientWidth), float(kClientHeight), 0.0f, 100.0f);
 			Matrix4x4 worldViewProjectionMatrixSprite = Multiply(worldMatrixSprite, Multiply(viewMatrixSprite, projectionMatrixSprite));
+
+
 			Matrix4x4 uvTransformMatrix = MakeScaleMatrix(uvTransformSprite.scale);
 			uvTransformMatrix = Multiply(uvTransformMatrix, MakeRotateZMatrix(uvTransformSprite.rotate.z));
 			uvTransformMatrix = Multiply(uvTransformMatrix, MakeTranslateMatrix(uvTransformSprite.translata));
@@ -1229,12 +1230,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			//定数バッファビュー (CBV) とディスクリプタテーブルの設定
 			//マテリアルCBufferの場所を設定
 			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());					// マテリアルCBVを設定
-			
+
 			commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());							// WVP用CBVを設定
 			commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);	// SRVのディスクリプタテーブルを設定
 			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());			// ライトのCBVを設定
 			commandList->DrawInstanced(ToralIndex, 1, 0, 0);	// 描画コール。三角形を描画
-			
+
 
 			commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
@@ -1244,7 +1245,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);													// スプライトの頂点バッファビューを設定
 			commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());				// スプライトのマテリアルCBVを設定
 			commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResourceSprite->GetGPUVirtualAddress());	// スプライトのトランスフォーメーション行列CBVを設定
-			//commandList->DrawInstanced(6, 1, 0, 0);																			// スプライトの描画コール
+			commandList->DrawInstanced(6, 1, 0, 0);																			// スプライトの描画コール
 #pragma endregion
 
 			/*-----ImGuiを描画する-----*/
