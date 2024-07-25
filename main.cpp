@@ -1092,7 +1092,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #pragma endregion
 
 	// モデル読み込み
-	ModelData modelData = LoadObjFile("resources", "plane.obj");
+	ModelData modelData = LoadObjFile("resources", "axis.obj");
 	// 頂点リソースを作る
 	ID3D12Resource* vertexModelResource = CreateBufferResource(device, sizeof(VertexData) * modelData.vertices.size());
 	// 頂点バッファ ビューを作成する
@@ -1280,12 +1280,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			// Gui
 			{
 				ImGui::Begin("Imgui");
-				ImGui::DragFloat3("Rotate", &transform.rotate.x, 1.0f);
-				ImGui::DragFloat2("UVTranslate", &uvTransformSprite.translata.x, 0.01f, -10.0f, 10.0f);
-				ImGui::DragFloat2("UVScale", &uvTransformSprite.scale.x, 0.01f, -10.0f, 10.0f);
-				ImGui::SliderAngle("UVRotate", &uvTransformSprite.rotate.z);
+				ImGui::DragFloat3("Rotate", &transform.rotate.x, 0.01f, 0.01f, 0.01f);
+				ImGui::DragFloat3("Camera", &cameraTransform.translata.x, 0.01f, -10.0f, 10.0f);
+				/*ImGui::DragFloat2("UVScale", &uvTransformSprite.scale.x, 0.01f, -10.0f, 10.0f);
+				ImGui::SliderAngle("UVRotate", &uvTransformSprite.rotate.z);*/
 
-				ImGui::Checkbox("useMonsterBall", &useMonsterBall);
+			/*	ImGui::Checkbox("useMonsterBall", &useMonsterBall);*/
 				ImGui::SliderFloat3("directionalLight", &directionalLightData->direction.x, -1.0f, 1.0f);
 				ImGui::End();
 			}
@@ -1297,7 +1297,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			//transform.rotate.y += 0.03f;
 
 			/*-----Transform情報を作る-----*/
-			Matrix4x4 worldMatrix = MakeRotateYMatrix(transform.rotate.y);
+			Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale,transform.rotate,transform.translata);
 			Matrix4x4 camraMatrix = MakeAffineMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translata);
 			Matrix4x4 viewMatrix = Inverse(camraMatrix);
 			Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
