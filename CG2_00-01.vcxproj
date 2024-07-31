@@ -133,6 +133,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="math\Vector3.h" />
     <ClInclude Include="math\Vector4.h" />
     <ClInclude Include="Matrix3x3.h" />
+    <ClInclude Include="ResourceObject.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt" />
