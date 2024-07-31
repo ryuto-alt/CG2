@@ -287,8 +287,7 @@ IDxcBlob* CompilerShader(
 	Log(ConvertString(std::format(L"Compile Succeeded, path:{}, profile:{}\n", filePath, profile)));
 	assert(SUCCEEDED(hr));
 	//もう使わないリソースを解放
-	shaderSource->Release();
-	shaderResult->Release();
+	
 	//実行用のバイナリを返却
 	return shaderBlob;
 }
@@ -674,7 +673,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		//指定したメッセージの表示を抑制する
 		infoQueue->PushStorageFilter(&filter);
 		//解放
-		infoQueue->Release();
+		
 	}
 #endif // _DEBUG
 
@@ -1452,65 +1451,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 #pragma region メモリリークしないための解放処理
 	CloseHandle(fenceEvent);
-//	fence->Release();
-//	rtvDescriptorHeap->Release();
-//	srvDescriptorHeap->Release();
-//	dsvDescriptorHeap->Release();
-//	swapChainResources[0]->Release();
-//	swapChainResources[1]->Release();
-//	swapChain->Release();
-//	commandList->Release();
-//	commandAllocator->Release();
-//	commandQueue->Release();
-//	device->Release();
-//	useAdapter->Release();
-//	dxgiFactory->Release();
-//#ifdef _DEBUG
-//	debugController->Release();
-//#endif // _DEBUG
-	CloseWindow(hwnd);
 
-	/*vertexResource->Release();
-	graphicsPipelineState->Release();
-	signatureBlob->Release();
-	if (errorBlob)
-	{
-		errorBlob->Release();
-	}
-	rootSignature->Release();
-	pixelShaderBlob->Release();
-	vertexShaderBlob->Release();
-	materialResource->Release();
-	materialResourceSprite->Release();
-	directionalLightResource->Release();
-	wvpResource->Release();
-	textureResource->Release();
-	textureResource2->Release();
-	vertexResourceSprite->Release();
-	transformationMatrixResourceSprite->Release();
-	depthStencilResource->Release();
-	dxcUtils->Release();
-	includeHandler->Release();*/
+	CloseWindow(hwnd);
 #pragma endregion
 
 	ImGui_ImplDX12_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 
-#pragma region アプリケーションのリソースリークをチェックするためのデバッグ操作を行う
-	////リソースリークチェック
-	////DXGIデバッグインターフェースの取得
-	//Microsoft::WRL::ComPtr<IDXGIDebug1> debug;
-	//if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&debug))))
-	//{
-	//	//ライブオブジェクトの報告
-	//	debug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
-	//	debug->ReportLiveObjects(DXGI_DEBUG_APP, DXGI_DEBUG_RLO_ALL);
-	//	debug->ReportLiveObjects(DXGI_DEBUG_D3D12, DXGI_DEBUG_RLO_ALL);
-	//	//デバッグインターフェースの解放
-	//	debug->Release();
-	//}
-#pragma endregion
+
 
 	//COMの終了処理
 	CoUninitialize();
