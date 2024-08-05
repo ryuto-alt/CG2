@@ -1097,7 +1097,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #pragma endregion
 
 	// モデル読み込み
-	ModelData modelData = LoadObjFile("resources", "axis.obj");
+	ModelData modelData = LoadObjFile("resources", "plane.obj");
 	// 頂点リソースを作る
 	Microsoft::WRL::ComPtr<ID3D12Resource> vertexModelResource = CreateBufferResource(device, sizeof(VertexData) * modelData.vertices.size());
 	// 頂点バッファ ビューを作成する
@@ -1284,14 +1284,32 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			ImGui::NewFrame();
 			// Gui
 			{
-				ImGui::Begin("Imgui");
+				// Model settings window
+				ImGui::Begin("Model Settings");
 				ImGui::DragFloat3("Rotate", &transform.rotate.x, 0.01f, 0.01f, 0.01f);
-				ImGui::DragFloat3("Camera", &cameraTransform.translata.x, 0.01f, -10.0f, 10.0f);
-				/*ImGui::DragFloat2("UVScale", &uvTransformSprite.scale.x, 0.01f, -10.0f, 10.0f);
-				ImGui::SliderAngle("UVRotate", &uvTransformSprite.rotate.z);*/
+				ImGui::End();
 
-				/*	ImGui::Checkbox("useMonsterBall", &useMonsterBall);*/
-				ImGui::SliderFloat3("directionalLight", &directionalLightData->direction.x, -1.0f, 1.0f);
+				// Camera settings window
+				ImGui::Begin("Camera Settings");
+				ImGui::DragFloat3("Camera Position", &cameraTransform.translata.x, 0.01f, -10.0f, 10.0f);
+				ImGui::End();
+
+				// UV settings window
+				ImGui::Begin("UV Settings");
+				ImGui::DragFloat2("UV Scale", &uvTransformSprite.scale.x, 0.01f, -10.0f, 10.0f);
+				ImGui::SliderAngle("UV Rotate", &uvTransformSprite.rotate.z);
+				ImGui::End();
+
+				// Sprite settings window
+				ImGui::Begin("Sprite Settings");
+				ImGui::DragFloat("Sprite Scale", &transformSprite.scale.x, 0.01f, -10.0f, 10.0f);
+				ImGui::DragFloat("Sprite Rotate", &transformSprite.rotate.y, 0.01f, -10.0f, 10.0f);
+				ImGui::DragFloat("Sprite Translate", &transformSprite.translata.x, 0.1f, -100.0f, 100.0f);
+				ImGui::End();
+
+				// Light settings window
+				ImGui::Begin("Light Settings");
+				ImGui::SliderFloat3("Directional Light", &directionalLightData->direction.x, -1.0f, 1.0f);
 				ImGui::End();
 			}
 			//ImGuiの内部コマンドを生成する
@@ -1299,7 +1317,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 			///-----ゲームの処理-----///
 
-			//transform.rotate.y += 0.03f;
+			transform.rotate.y = 3.130f;
 
 			/*-----Transform情報を作る-----*/
 			Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translata);
@@ -1395,7 +1413,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);													// スプライトの頂点バッファビューを設定
 			commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());				// スプライトのマテリアルCBVを設定
 			commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResourceSprite->GetGPUVirtualAddress());	// スプライトのトランスフォーメーション行列CBVを設定
-			//commandList->DrawInstanced(6, 1, 0, 0);																			// スプライトの描画コール
+			commandList->DrawInstanced(6, 1, 0, 0);																			// スプライトの描画コール
 #pragma endregion
 
 			/*-----ImGuiを描画する-----*/
