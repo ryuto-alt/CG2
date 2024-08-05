@@ -1284,32 +1284,35 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			ImGui::NewFrame();
 			// Gui
 			{
-				// Model settings window
 				ImGui::Begin("Model Settings");
-				ImGui::DragFloat3("Rotate", &transform.rotate.x, 0.01f, 0.01f, 0.01f);
-				ImGui::End();
+				// Model settings window
+				if (ImGui::CollapsingHeader("Model Settings")) {
+
+					ImGui::DragFloat3("Rotate", &transform.rotate.x, 0.01f, 0.01f, 0.01f);
+				}
+				ImGui::Separator();
 
 				// Camera settings window
-				ImGui::Begin("Camera Settings");
-				ImGui::DragFloat3("Camera Position", &cameraTransform.translata.x, 0.01f, -10.0f, 10.0f);
-				ImGui::End();
-
+				if (ImGui::CollapsingHeader("Camera")) {
+					ImGui::DragFloat3("Camera Position", &cameraTransform.translata.x, 0.01f, -10.0f, 10.0f);
+				}
+				ImGui::Separator();
 				// UV settings window
-				ImGui::Begin("UV Settings");
-				ImGui::DragFloat2("UV Scale", &uvTransformSprite.scale.x, 0.01f, -10.0f, 10.0f);
-				ImGui::SliderAngle("UV Rotate", &uvTransformSprite.rotate.z);
-				ImGui::End();
-
+				if (ImGui::CollapsingHeader("UVTransform")) {
+					ImGui::DragFloat2("UV Scale", &uvTransformSprite.scale.x, 0.01f, -10.0f, 10.0f);
+					ImGui::SliderAngle("UV Rotate", &uvTransformSprite.rotate.z);
+				}
+				ImGui::Separator();
 				// Sprite settings window
-				ImGui::Begin("Sprite Settings");
-				ImGui::DragFloat("Sprite Scale", &transformSprite.scale.x, 0.01f, -10.0f, 10.0f);
-				ImGui::DragFloat("Sprite Rotate", &transformSprite.rotate.y, 0.01f, -10.0f, 10.0f);
-				ImGui::DragFloat("Sprite Translate", &transformSprite.translata.x, 0.1f, -100.0f, 100.0f);
-				ImGui::End();
-
-				// Light settings window
-				ImGui::Begin("Light Settings");
-				ImGui::SliderFloat3("Directional Light", &directionalLightData->direction.x, -1.0f, 1.0f);
+				if (ImGui::CollapsingHeader("SpriteTransform")) {
+					ImGui::DragFloat("Sprite Scale", &transformSprite.scale.x, 0.01f, -10.0f, 10.0f);
+					ImGui::DragFloat("Sprite Rotate", &transformSprite.rotate.y, 0.01f, -10.0f, 10.0f);
+					ImGui::DragFloat("Sprite Translate", &transformSprite.translata.x, 0.1f, -100.0f, 100.0f);
+					ImGui::Separator();
+					if (ImGui::CollapsingHeader("Lighting")) {
+						ImGui::SliderFloat3("Directional Light", &directionalLightData->direction.x, -1.0f, 1.0f);
+					}
+				}
 				ImGui::End();
 			}
 			//ImGuiの内部コマンドを生成する
