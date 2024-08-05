@@ -1261,7 +1261,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #pragma endregion
 
 	//Tramsform変数を作る
-	Transform transform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
+	Transform transform{ {1.0f,1.0f,1.0f},{0.0f,3.130f,0.0f},{0.0f,0.0f,0.0f} };
 	Transform cameraTransform{ {1.5f,1.5f,1.5f},{0.0f,0.0f,0.0f},{0.0f,0.0f,-5.0f} };
 	Transform transformSprite{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 
@@ -1320,7 +1320,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 			///-----ゲームの処理-----///
 
-			transform.rotate.y = 3.130f;
+			//transform.rotate.y = 3.130f;
 
 			/*-----Transform情報を作る-----*/
 			Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translata);
