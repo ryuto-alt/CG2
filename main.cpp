@@ -96,6 +96,23 @@ struct ModelData
 
 };
 
+enum BlendMode {
+	kBlendModeNone,
+	//!< 通常αブレンド, デフォルト。 Src * SrcA + Dest * (1 - SrcA)
+	kBlendModeNormal,
+	//!< 加算, Src * SrcA + Dest * 1
+	kBlendModeAdd,
+	//!< 減算, Dest * 1 - Src * SrcA
+	kBlendModeSubtract,
+	//!< 乗算, Src * 0 + Dest + Src
+	kBlendModeMultily,
+	//!< スクリーン, Src * (1 - Dest) + Dest * 1
+	kBlendModeScreen,
+	// 利用してはいけない
+	kCountOfBlendMode,
+};
+
+
 const int32_t kClientWidth = 1280;
 const int32_t kClientHeight = 720;
 
@@ -287,7 +304,7 @@ IDxcBlob* CompilerShader(
 	Log(ConvertString(std::format(L"Compile Succeeded, path:{}, profile:{}\n", filePath, profile)));
 	assert(SUCCEEDED(hr));
 	//もう使わないリソースを解放
-	
+
 	//実行用のバイナリを返却
 	return shaderBlob;
 }
@@ -673,7 +690,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		//指定したメッセージの表示を抑制する
 		infoQueue->PushStorageFilter(&filter);
 		//解放
-		
+
 	}
 #endif // _DEBUG
 
@@ -891,6 +908,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	D3D12_BLEND_DESC blendDesc{};
 	//すべての色要素を書き込む
 	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+	blendDesc.RenderTarget[0].BlendEnable = TRUE;
+	blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+	blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+	blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+	blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+
+
 #pragma endregion
 
 #pragma region RasterizerStateの設定を行う
@@ -1097,7 +1123,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #pragma endregion
 
 	// モデル読み込み
-	ModelData modelData = LoadObjFile("resources", "plane.obj");
+	ModelData modelData = LoadObjFile("resources", "fence.obj");
 	// 頂点リソースを作る
 	Microsoft::WRL::ComPtr<ID3D12Resource> vertexModelResource = CreateBufferResource(device, sizeof(VertexData) * modelData.vertices.size());
 	// 頂点バッファ ビューを作成する
@@ -1289,12 +1315,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 				if (ImGui::CollapsingHeader("Model Settings")) {
 
 					ImGui::DragFloat3("Rotate", &transform.rotate.x, 0.01f, 0.01f, 0.01f);
+					ImGui::ColorEdit4("SpriteColor", &materialDataSprite->color.x);
+					ImGui::ColorEdit4("ModelColor", &materialData->color.x);
 				}
 				ImGui::Separator();
 
 				// Camera settings window
 				if (ImGui::CollapsingHeader("Camera")) {
 					ImGui::DragFloat3("Camera Position", &cameraTransform.translata.x, 0.01f, -10.0f, 10.0f);
+					ImGui::DragFloat3("Camera Rotate", &cameraTransform.rotate.y, 0.01f, -10.0f, 10.0f);
 				}
 				ImGui::Separator();
 				// UV settings window
@@ -1416,7 +1445,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);													// スプライトの頂点バッファビューを設定
 			commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());				// スプライトのマテリアルCBVを設定
 			commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResourceSprite->GetGPUVirtualAddress());	// スプライトのトランスフォーメーション行列CBVを設定
-			commandList->DrawInstanced(6, 1, 0, 0);																			// スプライトの描画コール
+			//commandList->DrawInstanced(6, 1, 0, 0);																			// スプライトの描画コール
 #pragma endregion
 
 			/*-----ImGuiを描画する-----*/
