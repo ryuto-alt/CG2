@@ -20,6 +20,7 @@
 #pragma comment(lib, "dxgi.lib")
 
 
+#include"Input.h"
 #include"ResourceObject.h"
 #include "math.h"
 #include"Matrix3x3.h"
@@ -28,7 +29,6 @@
 #include "externals/imgui/imgui_impl_win32.h"
 #include "externals/DirectXTex/DirectXTex.h"
 #include"externals/DirectXTex/d3dx12.h"
-#include"Input.h"
 
 
 
@@ -572,13 +572,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	MSG msg{};
 #pragma endregion
 
-	//ポインタ
-	Input* input = nullptr;
-	//入力の初期化
-	input = new Input();
-	input->Initialize(wc.hInstance, hwnd);
+	;
 
-	delete input;
+	
+
+	/*delete input;*/
 	// DebugLayer(デバッグレイヤー)
 #ifdef _DEBUG
 	Microsoft::WRL::ComPtr<ID3D12Debug1> debugController = nullptr;
@@ -1210,6 +1208,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 	bool useMonsterBall = true;
 
+
+	//ポインタ
+	Input* input = nullptr;
+	//入力の初期化
+	input = new Input();
+	input->Initialize(wc.hInstance, hwnd);
+
 	//ウィンドウのｘボタンが押されるまでループ
 	while (msg.message != WM_QUIT)
 	{
@@ -1221,6 +1226,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		}
 		else
 		{
+
+			input->update();
+			
+			
 			//ImGuiを使う
 			ImGui_ImplDX12_NewFrame();
 			ImGui_ImplWin32_NewFrame();
@@ -1415,6 +1424,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 #pragma region メモリリークしないための解放処理
 	CloseHandle(fenceEvent);
+	delete input;
 
 	CloseWindow(hwnd);
 #pragma endregion
