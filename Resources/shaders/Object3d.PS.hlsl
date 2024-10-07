@@ -16,7 +16,7 @@ struct DirectionalLight
 };
 
 ConstantBuffer<Material> gMaterial : register(b0);
-Texture2D<float32_t4> gTexture : register(t0);
+Texture2D<float4> gTexture : register(t0);
 SamplerState gSample : register(s0);
 
 ConstantBuffer<DirectionalLight> gDirectionalLight : register(b1);
@@ -46,7 +46,8 @@ PixelShaderOutput main(VertexShaderOutput input)
         output.color = gMaterial.color * textureColor;
     }
     
-    if (textureColor.a==0.0||textureColor.a<=0.5||output.color.a==0.0)
+    //if (textureColor.a==0.0||textureColor.a<=0.5||output.color.a==0.0)
+    if (output.color.a==0.0)
     {
         discard;
     }
