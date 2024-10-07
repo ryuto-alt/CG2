@@ -532,7 +532,7 @@ ModelData LoadObjFile(const std::string& directoryPath, const std::string& filen
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
 	//COMの初期化
-	CoInitializeEx(0, COINIT_MULTITHREADED);
+	HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
 
 
 #pragma region Window
@@ -573,8 +573,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	ShowWindow(hwnd, SW_SHOW);
 	MSG msg{};
 #pragma endregion
-
-	;
 
 
 
