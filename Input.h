@@ -11,15 +11,24 @@ class Input {
 public:
 	//namespace省略
 	template <class T>using ComPtr = Microsoft::WRL::ComPtr<T>;
-	
+
 public:
 	//初期化
-	void Initialize(HINSTANCE hInstance,HWND hwnd);
+	void Initialize(HINSTANCE hInstance, HWND hwnd);
 	//更新
 	void update();
 
+	/// <summary>
+	/// キーの押下をチェック
+	/// </summary>
+	/// 	キー番号
+	/// 	おされているか
+	bool PushKey(BYTE keyNumBer);
 private:
+
 	IDirectInputDevice8* keyboard = nullptr;
 	IDirectInput8* directInput = nullptr;
-	
+	//全キーの入力情報を取得する
+	BYTE key[256] = {};
+
 };

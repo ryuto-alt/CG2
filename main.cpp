@@ -288,7 +288,7 @@ IDxcBlob* CompilerShader(
 	Log(ConvertString(std::format(L"Compile Succeeded, path:{}, profile:{}\n", filePath, profile)));
 	assert(SUCCEEDED(hr));
 	//もう使わないリソースを解放
-	
+
 	//実行用のバイナリを返却
 	return shaderBlob;
 }
@@ -531,8 +531,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
 	//COMの初期化
 	CoInitializeEx(0, COINIT_MULTITHREADED);
-	
-	
+
+
 #pragma region Window
 	// ウィンドウクラスを登録する
 	WNDCLASS wc{};
@@ -574,7 +574,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 	;
 
-	
+
 
 	/*delete input;*/
 	// DebugLayer(デバッグレイヤー)
@@ -680,7 +680,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		//指定したメッセージの表示を抑制する
 		infoQueue->PushStorageFilter(&filter);
 		//解放
-		
+
 	}
 #endif // _DEBUG
 
@@ -1165,7 +1165,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #pragma endregion
 
 #pragma region 球体の頂点位置テクスチャ座標および法線ベクトルを計算し頂点バッファに書き込む
-	
+
 #pragma endregion
 
 #pragma region 描画パイプラインで使用するビューポートとシザー矩形を設定
@@ -1228,8 +1228,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		{
 
 			input->update();
-			
-			
+			if (input->PushKey(DIK_D)) {
+				transform.translata.x += 0.01f;
+			}
+			if (input->PushKey(DIK_A)) {
+				transform.translata.x -= 0.01f;
+			}
+			if (input->PushKey(DIK_W)) {
+				transform.translata.y += 0.01f;
+			}
+			if (input->PushKey(DIK_S)) {
+				transform.translata.y -= 0.01f;
+			}
 			//ImGuiを使う
 			ImGui_ImplDX12_NewFrame();
 			ImGui_ImplWin32_NewFrame();
@@ -1360,7 +1370,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			commandList->DrawInstanced(UINT(modelData.vertices.size()), 1, 0, 0);
 
 
-			commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
+			//commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
 			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
 
@@ -1368,7 +1378,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);													// スプライトの頂点バッファビューを設定
 			commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());				// スプライトのマテリアルCBVを設定
 			commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResourceSprite->GetGPUVirtualAddress());	// スプライトのトランスフォーメーション行列CBVを設定
-			commandList->DrawInstanced(6, 1, 0, 0);																			// スプライトの描画コール
+			//commandList->DrawInstanced(6, 1, 0, 0);																			// スプライトの描画コール
 #pragma endregion
 
 			/*-----ImGuiを描画する-----*/
