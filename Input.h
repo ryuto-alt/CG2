@@ -24,11 +24,13 @@ public:
 	/// 	キー番号
 	/// 	おされているか
 	bool PushKey(BYTE keyNumBer);
+	bool TrrigerKey(BYTE keyNumBer);
 private:
 
 	IDirectInputDevice8* keyboard = nullptr;
 	IDirectInput8* directInput = nullptr;
 	//全キーの入力情報を取得する
 	BYTE key[256] = {};
+	BYTE prevKey[256] = {};  
 
 };

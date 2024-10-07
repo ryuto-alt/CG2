@@ -138,6 +138,8 @@ Microsoft::WRL::ComPtr<ID3D12Resource> CreateBufferResource(Microsoft::WRL::ComP
 }
 #pragma endregion
 
+#pragma region ウィンドウぷろーじゃ
+
 //ウィンドウプロシージャ
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -159,7 +161,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	//標準のメッセージ処理を行う
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 }
-
+#pragma endregion
 // 出力ウィンドウに文字を出す
 static void Log(const std::string& message)
 {
@@ -1234,11 +1236,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			if (input->PushKey(DIK_A)) {
 				transform.translata.x -= 0.01f;
 			}
-			if (input->PushKey(DIK_W)) {
-				transform.translata.y += 0.01f;
+			if (input->TrrigerKey(DIK_W)) {
+				transform.translata.y += 1.0f;
 			}
-			if (input->PushKey(DIK_S)) {
-				transform.translata.y -= 0.01f;
+			if (input->TrrigerKey(DIK_S)) {
+				transform.translata.y -= 1.0f;
 			}
 			//ImGuiを使う
 			ImGui_ImplDX12_NewFrame();
