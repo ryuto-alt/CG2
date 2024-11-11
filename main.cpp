@@ -96,6 +96,13 @@ struct ModelData
 
 };
 
+struct Particle {
+	Transform transform;
+	Vector3 velocity;
+	Vector3 scale;
+	Vector3 rotate;
+	Vector3 translate;
+};
 enum BlendMode {
 	kBlendModeNone,
 	//!< 通常αブレンド, デフォルト。 Src * SrcA + Dest * (1 - SrcA)
@@ -115,6 +122,7 @@ enum BlendMode {
 
 const int32_t kClientWidth = 1280;
 const int32_t kClientHeight = 720;
+const float kDeltaTime = 1.0f / 60.0f; // 1フレームあたりの時間(例: 60FPS)
 
 
 
@@ -1267,11 +1275,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #pragma region Transform作成
 
 
-	Transform transforms[kNumInstance];
+	Particle particles[kNumInstance];
 	for (uint32_t index = 0; index < kNumInstance; ++index) {
-		transforms[index].scale = { 1.0f,1.0f,1.0f };
-		transforms[index].rotate = { 0.0f,3.130f,0.0f };
-		transforms[index].translata = { index * 0.1f,index * 0.1f,index * 0.1f };
+		particles[index].velocity = { 0.0f,1.0f,0.0f };
+		particles[index].scale = { 1.0f,1.0f,1.0f };
+		particles[index].rotate = { 0.0f,3.130f,0.0f };
+		particles[index].translate = { index * 0.1f,index * 0.1f,index * 0.1f };
 	}
 
 #pragma endregion
@@ -1408,7 +1417,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 				// Model settings window
 				if (ImGui::CollapsingHeader("Model Settings")) {
 
-					ImGui::DragFloat3("Rotate", &transforms->rotate.x, 0.01f, 0.01f, 0.01f);
+					ImGui::DragFloat3("Rotate", &particles->rotate.x, 0.01f, 0.01f, 0.01f);
 					ImGui::ColorEdit4("SpriteColor", &materialDataSprite->color.x);
 					ImGui::ColorEdit4("ModelColor", &materialData->color.x);
 				}
@@ -1445,6 +1454,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 			//transform.rotate.y = 3.130f;
 
+
+
 			/*-----Transform情報を作る-----*/
 			Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translata);
 			Matrix4x4 camraMatrix = MakeAffineMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translata);
@@ -1473,8 +1484,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			transformationMatrixDataSprite->world = worldMatrix;
 
 			for (uint32_t index = 0; index < kNumInstance; ++index) {
+				particles[index].transform.translata.x += particles[index].velocity.x + kDeltaTime;
+				particles[index].transform.translata.y += particles[index].velocity.y + kDeltaTime;
+				particles[index].transform.translata.z += particles[index].velocity.z + kDeltaTime;
 				Matrix4x4 worldMatrix =
-					MakeAffineMatrix(transforms[index].scale, transforms[index].rotate, transforms[index].translata);
+					MakeAffineMatrix(particles[index].scale, particles[index].rotate, particles[index].translate);
 				Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix,Multiply(viewMatrix, projectionMatrix));
 				instancingData[index].WVP = worldViewProjectionMatrix;
 				instancingData[index].world = worldMatrix;

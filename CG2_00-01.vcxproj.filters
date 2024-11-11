@@ -80,9 +80,6 @@
     <ClInclude Include="math\Vector2.h">
       <Filter>math</Filter>
     </ClInclude>
-    <ClInclude Include="math\Vector3.h">
-      <Filter>math</Filter>
-    </ClInclude>
     <ClInclude Include="math\Vector4.h">
       <Filter>math</Filter>
     </ClInclude>
@@ -91,6 +88,9 @@
     </ClInclude>
     <ClInclude Include="ResourceObject.h">
       <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector3.h">
+      <Filter>math</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
