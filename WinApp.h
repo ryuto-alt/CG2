@@ -11,6 +11,12 @@ public:
 	void Initialize();
 	//更新
 	void Update();
-
+	HWND GetHwnd() const { return hwnd; } // 追加：HWNDを取得するためのメソッド
+	MSG& GetMsg() { return msg_; } // msg へのアクセス用
+	WNDCLASS& GetWndClass() { return wc_; } // wc へのアクセス用
+private:
+	HWND hwnd = nullptr;
+	MSG msg_{};
+	WNDCLASS wc_{};
 };
 

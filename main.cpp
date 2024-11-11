@@ -13,6 +13,7 @@
 #include<fstream>
 #include<sstream>
 #include<wrl.h>
+#include"WinApp.h"
 
 #pragma comment(lib,"dxguid.lib")
 #pragma comment(lib,"dxcompiler.lib")
@@ -535,45 +536,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
 
 
-#pragma region Window
-	// ウィンドウクラスを登録する
-	WNDCLASS wc{};
-	//ウィンドウプロシージャ
-	wc.lpfnWndProc = WindowProc;
-	//ウィンドウクラス名（なんでもいい）
-	wc.lpszClassName = L"CG2WindowClass";
-	//インスタンスハンドル
-	wc.hInstance = GetModuleHandle(nullptr);
-	//カーソル
-	wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
-	//ウィンドウクラスを登録する
-	RegisterClass(&wc);
-
-	//ウィンドウサイズを表す構造体にクライアント領域を入れる
-	RECT wrc = { 0,0,kClientWidth,kClientHeight };
-
-	//クライアント領域をmとに実際のサイズにwrcに変更してもらう
-	AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false);
-
-	//ウィンドウの生成
-	HWND hwnd = CreateWindow(
-		wc.lpszClassName,				//利用するクラス名
-		L"CG2",							//タイトルバーの文字
-		WS_OVERLAPPEDWINDOW,			//よく見るウィンドウスタイル
-		CW_USEDEFAULT,					//表示X座標
-		CW_USEDEFAULT,					//表示Y座標
-		wrc.right - wrc.left,			//ウィンドウ横幅
-		wrc.bottom - wrc.top,			//ウィンドウ縦幅
-		nullptr,						//親ウィンドウハンドル
-		nullptr,						//メニューハンドル
-		wc.hInstance,					//インスタンスハンドル
-		nullptr);						//オプション
-
-	//ウィンドウを表示する
-	ShowWindow(hwnd, SW_SHOW);
-	MSG msg{};
-#pragma endregion
-
+	WinApp* winApp = new WinApp;;
+	winApp->Initialize();
+	HWND hwnd = winApp->GetHwnd();
+	MSG& msg = winApp->GetMsg();
+	// wcへのアクセス
+	WNDCLASS& wc = winApp->GetWndClass();
 
 
 	/*delete input;*/
@@ -594,7 +562,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	Microsoft::WRL::ComPtr<IDXGIFactory7> dxgiFactory = nullptr;
 	//HRESULTはWindows系のエラーコードであり、
 	//関数が成功したかどうかをSUCCEEDEDマクロ判定できる
-	HRESULT hr = CreateDXGIFactory(IID_PPV_ARGS(&dxgiFactory));
+	hr = CreateDXGIFactory(IID_PPV_ARGS(&dxgiFactory));
 	//初期化の根本的な部分でエラーが出た場合はプログラムが間違っているか、どうにもできない場合があるのでassertにしておく
 	assert(SUCCEEDED(hr));
 #pragma endregion
