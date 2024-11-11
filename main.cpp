@@ -1236,11 +1236,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			if (input->PushKey(DIK_A)) {
 				transform.translata.x -= 0.01f;
 			}
-			if (input->TrrigerKey(DIK_W)) {
-				transform.translata.y += 1.0f;
+			if (input->PushKey(DIK_W)) {
+				transform.translata.y += 0.01f;
 			}
-			if (input->TrrigerKey(DIK_S)) {
-				transform.translata.y -= 1.0f;
+			if (input->PushKey(DIK_S)) {
+				transform.translata.y -= 0.01f;
 			}
 			//ImGuiを使う
 			ImGui_ImplDX12_NewFrame();
