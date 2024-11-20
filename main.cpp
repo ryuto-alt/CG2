@@ -13,6 +13,7 @@
 #include<fstream>
 #include<sstream>
 #include<wrl.h>
+#include<random>
 
 #pragma comment(lib,"dxguid.lib")
 #pragma comment(lib,"dxcompiler.lib")
@@ -99,9 +100,6 @@ struct ModelData
 struct Particle {
 	Transform transform;
 	Vector3 velocity;
-	Vector3 scale;
-	Vector3 rotate;
-	Vector3 translate;
 };
 enum BlendMode {
 	kBlendModeNone,
@@ -123,6 +121,7 @@ enum BlendMode {
 const int32_t kClientWidth = 1280;
 const int32_t kClientHeight = 720;
 const float kDeltaTime = 1.0f / 60.0f; // 1フレームあたりの時間(例: 60FPS)
+
 
 
 
@@ -856,7 +855,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	descriptorRangeForInstancing[0].NumDescriptors = 1;															//数は1つ
 	descriptorRangeForInstancing[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;									//SRVを使う
 	descriptorRangeForInstancing[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;	//Offsetを自動計算
-	
+
 	//RootParameter作成。複数設定できるので配列。今回は1つだけなので長さ１の配列
 	D3D12_ROOT_PARAMETER rootParameters[4] = {};
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;						//CBVを使う
@@ -882,7 +881,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 	rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;						//CBVを使う
 	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;						//PixelShaderを使う
-	rootParameters[3].Descriptor.ShaderRegister = 1;	
+	rootParameters[3].Descriptor.ShaderRegister = 1;
 	//レジスタ番号1を使う
 	descriptionRootSignature.pParameters = rootParameters;									//ルートパラメータ配列へのポインタ
 	descriptionRootSignature.NumParameters = _countof(rootParameters);
@@ -1276,13 +1275,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 
 	Particle particles[kNumInstance];
+
+	std::random_device seedGenerator;
+	std::mt19937 randomEngine(seedGenerator());
+	std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
+	
 	for (uint32_t index = 0; index < kNumInstance; ++index) {
 		particles[index].velocity = { 0.0f,1.0f,0.0f };
-		particles[index].scale = { 1.0f,1.0f,1.0f };
-		particles[index].rotate = { 0.0f,3.130f,0.0f };
-		particles[index].translate = { index * 0.1f,index * 0.1f,index * 0.1f };
-	}
+		particles[index].transform.scale = { 1.0f,1.0f,1.0f };
+		particles[index].transform.rotate = { 0.0f,3.130f,0.0f };
+		particles[index].transform.translata = { distribution(randomEngine),distribution(randomEngine),distribution(randomEngine) };
+		particles[index].velocity = { distribution(randomEngine),distribution(randomEngine),distribution(randomEngine) };
 
+
+	}
+	const float kDeltaTime = 1.0f / 60.0f;
 #pragma endregion
 
 
@@ -1391,7 +1398,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 	//Tramsform変数を作る
 	Transform transform{ {1.0f,1.0f,1.0f},{0.0f,3.130f,0.0f},{0.0f,0.0f,0.0f} };
-	Transform cameraTransform{ {1.5f,1.5f,1.5f},{0.0f,0.0f,0.0f},{0.0f,0.0f,-5.0f} };
+	Transform cameraTransform{ {1.5f,1.5f,1.5f},{0.0f,0.0f,0.0f},{0.0f,1.0f,-10.0f} };
 	Transform transformSprite{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 
 	bool useMonsterBall = true;
@@ -1417,7 +1424,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 				// Model settings window
 				if (ImGui::CollapsingHeader("Model Settings")) {
 
-					ImGui::DragFloat3("Rotate", &particles->rotate.x, 0.01f, 0.01f, 0.01f);
+					ImGui::DragFloat3("Rotate", &particles->transform.rotate.x, 0.01f, 0.01f, 0.01f);
 					ImGui::ColorEdit4("SpriteColor", &materialDataSprite->color.x);
 					ImGui::ColorEdit4("ModelColor", &materialData->color.x);
 				}
@@ -1484,14 +1491,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			transformationMatrixDataSprite->world = worldMatrix;
 
 			for (uint32_t index = 0; index < kNumInstance; ++index) {
-				particles[index].transform.translata.x += particles[index].velocity.x + kDeltaTime;
-				particles[index].transform.translata.y += particles[index].velocity.y + kDeltaTime;
-				particles[index].transform.translata.z += particles[index].velocity.z + kDeltaTime;
+				particles[index].transform.translata.x += particles[index].velocity.x * kDeltaTime;
+				particles[index].transform.translata.y += particles[index].velocity.y * kDeltaTime;
+				particles[index].transform.translata.z += particles[index].velocity.z * kDeltaTime;
 				Matrix4x4 worldMatrix =
-					MakeAffineMatrix(particles[index].scale, particles[index].rotate, particles[index].translate);
-				Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix,Multiply(viewMatrix, projectionMatrix));
+					MakeAffineMatrix(particles[index].transform.scale, particles[index].transform.rotate, particles[index].transform.translata);
+				Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 				instancingData[index].WVP = worldViewProjectionMatrix;
 				instancingData[index].world = worldMatrix;
+
+				/*particles[index].transform.translata.x += particles[index].velocity.x * kDeltaTime;
+				particles[index].transform.translata.y += particles[index].velocity.y * kDeltaTime;
+				particles[index].transform.translata.z += particles[index].velocity.z * kDeltaTime;*/
 			}
 			//これから書き込むバックバッファのインデックスを取得
 			UINT backBufferIndex = swapChain->GetCurrentBackBufferIndex();
@@ -1550,7 +1561,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());			// ライトのCBVを設定
 			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());			// ライトのCBVを設定
 			commandList->SetGraphicsRootDescriptorTable(1, instancingSrvHandleGPU);
-				//commandList->DrawInstanced(ToralIndex, 1, 0, 0);	// 描画コール。三角形を描画
+			//commandList->DrawInstanced(ToralIndex, 1, 0, 0);	// 描画コール。三角形を描画
 			commandList->DrawInstanced(UINT(modelData.vertices.size()), kNumInstance, 0, 0);
 
 
