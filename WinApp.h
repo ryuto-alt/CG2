@@ -30,6 +30,8 @@ public:
 
 	HINSTANCE GetHInstance()const { return wc.hInstance; }
 
+	bool ProcessMessage();
+
 private:
 
 	// ウィンドウハンドル
