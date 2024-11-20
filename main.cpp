@@ -101,6 +101,24 @@ struct Particle {
 	Transform transform;
 	Vector3 velocity;
 };
+
+std::random_device seedGenerator;
+std::mt19937 randomEngine(seedGenerator());
+
+Particle MakeNewParticle(std::mt19937& randomEngine)
+{
+	std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
+	Particle particle;
+	//particle.velocity = { 0.0f,1.0f,0.0f };
+	particle.transform.scale = { 1.0f,1.0f,1.0f };
+	particle.transform.rotate = { 0.0f,3.130f,0.0f };
+	particle.transform.translata = { distribution(randomEngine),distribution(randomEngine),distribution(randomEngine) };
+	particle.velocity = { distribution(randomEngine),distribution(randomEngine),distribution(randomEngine) };
+	return particle;
+}
+
+
+
 enum BlendMode {
 	kBlendModeNone,
 	//!< 通常αブレンド, デフォルト。 Src * SrcA + Dest * (1 - SrcA)
@@ -1251,6 +1269,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	instancingSrvDesc.Buffer.StructureByteStride = sizeof(TransformationMatrix);
 
 
+
+	Particle particles[kNumInstance];
+
+
 	// 1つ目のテクスチャのSRVのデスクリプタヒープへのバインド
 	D3D12_CPU_DESCRIPTOR_HANDLE textureSrvHandleCPU = GetCPUDescriptorHandle(srvDescriptorHeap, descriptorSizeSRV, 1);
 	D3D12_GPU_DESCRIPTOR_HANDLE textureSrvHandleGPU = GetGPUDescriptorHandle(srvDescriptorHeap, descriptorSizeSRV, 1);
@@ -1271,26 +1293,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	device->CreateShaderResourceView(instancingResource.Get(), &instancingSrvDesc, instancingSrvHandleCPU);
 #pragma endregion
 
-#pragma region Transform作成
-
-
-	Particle particles[kNumInstance];
-
-	std::random_device seedGenerator;
-	std::mt19937 randomEngine(seedGenerator());
-	std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
-	
-	for (uint32_t index = 0; index < kNumInstance; ++index) {
-		particles[index].velocity = { 0.0f,1.0f,0.0f };
-		particles[index].transform.scale = { 1.0f,1.0f,1.0f };
-		particles[index].transform.rotate = { 0.0f,3.130f,0.0f };
-		particles[index].transform.translata = { distribution(randomEngine),distribution(randomEngine),distribution(randomEngine) };
-		particles[index].velocity = { distribution(randomEngine),distribution(randomEngine),distribution(randomEngine) };
-
-
-	}
-	const float kDeltaTime = 1.0f / 60.0f;
-#pragma endregion
 
 
 #pragma region 球体の頂点位置テクスチャ座標および法線ベクトルを計算し頂点バッファに書き込む
@@ -1424,7 +1426,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 				// Model settings window
 				if (ImGui::CollapsingHeader("Model Settings")) {
 
-					ImGui::DragFloat3("Rotate", &particles->transform.rotate.x, 0.01f, 0.01f, 0.01f);
+					//ImGui::DragFloat3("Rotate", &particle->transform.rotate.x, 0.01f, 0.01f, 0.01f);
 					ImGui::ColorEdit4("SpriteColor", &materialDataSprite->color.x);
 					ImGui::ColorEdit4("ModelColor", &materialData->color.x);
 				}
@@ -1491,18 +1493,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			transformationMatrixDataSprite->world = worldMatrix;
 
 			for (uint32_t index = 0; index < kNumInstance; ++index) {
-				particles[index].transform.translata.x += particles[index].velocity.x * kDeltaTime;
-				particles[index].transform.translata.y += particles[index].velocity.y * kDeltaTime;
-				particles[index].transform.translata.z += particles[index].velocity.z * kDeltaTime;
+				particles[index] = MakeNewParticle(randomEngine);
 				Matrix4x4 worldMatrix =
 					MakeAffineMatrix(particles[index].transform.scale, particles[index].transform.rotate, particles[index].transform.translata);
 				Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 				instancingData[index].WVP = worldViewProjectionMatrix;
 				instancingData[index].world = worldMatrix;
-
-				/*particles[index].transform.translata.x += particles[index].velocity.x * kDeltaTime;
-				particles[index].transform.translata.y += particles[index].velocity.y * kDeltaTime;
-				particles[index].transform.translata.z += particles[index].velocity.z * kDeltaTime;*/
 			}
 			//これから書き込むバックバッファのインデックスを取得
 			UINT backBufferIndex = swapChain->GetCurrentBackBufferIndex();
