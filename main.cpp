@@ -1447,6 +1447,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		instancingData[index].world = worldMatrix;
 		instancingData[index].color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 
+	
 	}
 	instancingSrvDesc.Buffer.StructureByteStride = sizeof(ParticleForGPU);
 
@@ -1458,6 +1459,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	billboardMatrix.m[3][1] = 0.0f;
 	billboardMatrix.m[3][2] = 0.0f;
 
+
+	float spawnTimer = 0.0f; // パーティクル生成用のタイマー
+	const float spawnInterval = 0.5f; // パーティクル生成間隔（0.5秒）
 
 	//ウィンドウのｘボタンが押されるまでループ
 	while (msg.message != WM_QUIT)
@@ -1538,28 +1542,63 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			UINT backBufferIndex = swapChain->GetCurrentBackBufferIndex();
 
 
+			// パーティクルの生成タイマーを更新
+			spawnTimer += kDeltaTime;
 
-			// パーティクルの移動
+			// 0.5秒以上経過したらパーティクルを生成
+			if (spawnTimer >= spawnInterval) {
+				spawnTimer -= spawnInterval; // タイマーをリセット
+
+				// 新しいパーティクルを3つ生成
+				for (int i = 0; i < 3; ++i) {
+					// 空きスロットを探して新しいパーティクルを生成
+					for (uint32_t index = 0; index < kNumMaxInstance; ++index) {
+						if (particles[index].currentTime >= particles[index].lifeTime) {
+							// パーティクルを初期化
+							particles[index] = MakeNewParticle(randomEngine);
+
+							Matrix4x4 worldMatrix = MakeAffineMatrix(
+								particles[index].transform.scale,
+								particles[index].transform.rotate,
+								particles[index].transform.translata
+							);
+							Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+							instancingData[index].WVP = worldViewProjectionMatrix;
+							instancingData[index].world = worldMatrix;
+							instancingData[index].color = particles[index].color;
+
+							break; // 次のパーティクルに進む
+						}
+					}
+				}
+			}
+
+			// パーティクルの移動と描画データの更新
 			for (uint32_t index = 0; index < kNumMaxInstance; ++index) {
-				particles[index].transform.translata.x += particles[index].velocity.x * kDeltaTime;
-				particles[index].transform.translata.y += particles[index].velocity.y * kDeltaTime;
-				particles[index].transform.translata.z += particles[index].velocity.z * kDeltaTime;
+				if (particles[index].currentTime < particles[index].lifeTime) {
+					// 移動
+					particles[index].transform.translata.x += particles[index].velocity.x * kDeltaTime;
+					particles[index].transform.translata.y += particles[index].velocity.y * kDeltaTime;
+					particles[index].transform.translata.z += particles[index].velocity.z * kDeltaTime;
 
-				Matrix4x4 scaleMatrix = MakeScaleMatrix(particles[index].transform.scale);
-				Matrix4x4 translateMatrix = MakeTranslateMatrix(particles[index].transform.translata);
+					// 時間を更新
+					particles[index].currentTime += kDeltaTime;
 
-				// 現在時間を更新
-				particles[index].currentTime += kDeltaTime;
+					// 行列計算
+					Matrix4x4 scaleMatrix = MakeScaleMatrix(particles[index].transform.scale);
+					Matrix4x4 translateMatrix = MakeTranslateMatrix(particles[index].transform.translata);
+					Matrix4x4 worldMatrix = scaleMatrix * billboardMatrix * translateMatrix;
 
-				Matrix4x4 worldMatrix = scaleMatrix * billboardMatrix * translateMatrix;
-				
-				instancingData[index].world = worldMatrix;
-				instancingData[index].WVP = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
-				instancingData[index].color = particles[index].color;
+					// 描画データを更新
+					instancingData[index].world = worldMatrix;
+					instancingData[index].WVP = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 
-				float alpha = 1.0f - (particles[index].currentTime / particles[index].lifeTime);
-				alpha = std::clamp(alpha, 0.0f, 1.0f); // アルファ値を0～1に制限
-				instancingData[index].color.w = alpha;
+					// アルファ値の更新（寿命に応じて透明にする）
+					float alpha = 1.0f - (particles[index].currentTime / particles[index].lifeTime);
+					alpha = std::clamp(alpha, 0.0f, 1.0f); // アルファ値を0～1に制限
+					instancingData[index].color = particles[index].color;
+					instancingData[index].color.w = alpha;
+				}
 			}
 
 
