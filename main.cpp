@@ -14,6 +14,7 @@
 #include<sstream>
 #include<wrl.h>
 #include<random>
+#include<numbers>
 
 #pragma comment(lib,"dxguid.lib")
 #pragma comment(lib,"dxcompiler.lib")
@@ -68,7 +69,7 @@ struct ParticleForGPU {
 	Matrix4x4 WVP;
 	Matrix4x4 world;
 	Vector4 color;
-	
+
 };
 
 
@@ -116,7 +117,7 @@ Particle MakeNewParticle(std::mt19937& randomEngine)
 {
 	std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
 	std::uniform_real_distribution<float> distColor(0.0f, 1.0f);
-	std::uniform_real_distribution<float> distTime(1.0f,3.0f);
+	std::uniform_real_distribution<float> distTime(1.0f, 3.0f);
 	Particle particle;
 	particle.velocity = { 0.0f,1.0f,0.0f };
 	particle.transform.scale = { 1.0f,1.0f,1.0f };
@@ -1305,7 +1306,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	device->CreateShaderResourceView(instancingResource.Get(), &instancingSrvDesc, instancingSrvHandleCPU);
 
 	//Microsoft::WRL::ComPtr<ID3D12Resource>instancingResource = CreateBufferResource(device, sizeof(ParticleForGPU) * kNumMaxInstance);
-	
+
 #pragma endregion
 
 
@@ -1415,7 +1416,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 	//Tramsform変数を作る
 	Transform transform{ {1.0f,1.0f,1.0f},{0.0f,3.130f,0.0f},{0.0f,0.0f,0.0f} };
-	Transform cameraTransform{ {1.5f,1.5f,1.5f},{0.0f,0.0f,0.0f},{0.0f,1.0f,-10.0f} };
+	Transform cameraTransform{
+	{1.0f, 1.0f, 1.0f},
+	{std::numbers::pi_v<float> / 3.0f, std::numbers::pi_v<float>, 0.0f},
+	{0.0f, 23.0f, 10.0f}
+	};
 	Transform transformSprite{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 
 	bool useMonsterBall = true;
@@ -1435,15 +1440,25 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			particles[index].transform.scale,
 			particles[index].transform.rotate,
 			particles[index].transform.translata
-			
+
 		);
 		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 		instancingData[index].WVP = worldViewProjectionMatrix;
 		instancingData[index].world = worldMatrix;
 		instancingData[index].color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-		
+
 	}
 	instancingSrvDesc.Buffer.StructureByteStride = sizeof(ParticleForGPU);
+
+
+
+	Matrix4x4 backToFrontMatrix = MakeRotateYMatrix(std::numbers::pi_v<float>);
+	Matrix4x4 billboardMatrix = Multiply(backToFrontMatrix, camraMatrix);
+	billboardMatrix.m[3][0] = 0.0f;
+	billboardMatrix.m[3][1] = 0.0f;
+	billboardMatrix.m[3][2] = 0.0f;
+
+
 	//ウィンドウのｘボタンが押されるまでループ
 	while (msg.message != WM_QUIT)
 	{
@@ -1518,7 +1533,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			transformationMatrixDataSprite->WVP = worldViewProjectionMatrixSprite;
 			transformationMatrixDataSprite->world = worldMatrix;
 
-			
+
 			//これから書き込むバックバッファのインデックスを取得
 			UINT backBufferIndex = swapChain->GetCurrentBackBufferIndex();
 
@@ -1530,14 +1545,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 				particles[index].transform.translata.y += particles[index].velocity.y * kDeltaTime;
 				particles[index].transform.translata.z += particles[index].velocity.z * kDeltaTime;
 
+				Matrix4x4 scaleMatrix = MakeScaleMatrix(particles[index].transform.scale);
+				Matrix4x4 translateMatrix = MakeTranslateMatrix(particles[index].transform.translata);
+
 				// 現在時間を更新
 				particles[index].currentTime += kDeltaTime;
 
-				Matrix4x4 worldMatrix = MakeAffineMatrix(
-					particles[index].transform.scale,
-					particles[index].transform.rotate,
-					particles[index].transform.translata
-				);
+				Matrix4x4 worldMatrix = scaleMatrix * billboardMatrix * translateMatrix;
+				
 				instancingData[index].world = worldMatrix;
 				instancingData[index].WVP = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 				instancingData[index].color = particles[index].color;
@@ -1546,7 +1561,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 				alpha = std::clamp(alpha, 0.0f, 1.0f); // アルファ値を0～1に制限
 				instancingData[index].color.w = alpha;
 			}
-			
+
 
 #pragma region リソースの状態を遷移させ描画ターゲットを設定しクリア操作を実行
 			//TransitionBarrierの設定
