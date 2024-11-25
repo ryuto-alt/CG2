@@ -37,9 +37,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         }
         else {
             dxCommon->Begin(); // 描画開始
-
-            // *** 独自の処理をここに記述 ***
-            // 例:
+           
             // - シーンの更新
             // - オブジェクトの描画
             // - 入力の処理
