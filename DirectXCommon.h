@@ -32,6 +32,7 @@ class DirectXCommon
 	void ScissorInitialize();
 	void DxcCompilerInitialize();
 	void ImguiInitialize();
+	
 
 public:
 	// 初期化
@@ -39,6 +40,10 @@ public:
 
 	// 描画前処理
 	void Begin();
+
+	void PreDraw();
+
+	void PostDraw();
 
 	// 描画後処理
 	void End();

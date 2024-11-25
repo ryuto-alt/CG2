@@ -253,6 +253,80 @@ void DirectXCommon::ImguiInitialize()
 		srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 }
 
+void DirectXCommon::PreDraw() {
+	assert(commandList != nullptr);
+
+	// 現在のバックバッファのインデックスを取得
+	UINT backBufferIndex = swapChain->GetCurrentBackBufferIndex();
+
+	// TransitionBarrierの設定
+	D3D12_RESOURCE_BARRIER barrier{};
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	barrier.Transition.pResource = swapChainResources[backBufferIndex].Get();
+	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT; // 描画前の状態
+	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET; // 描画ターゲットとして設定
+	commandList->ResourceBarrier(1, &barrier);
+
+	// 描画先のRTVとDSVを設定
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = GetCPUDescriptorHandle(rtvDescriptorHeap, descriptorSizeRTV, backBufferIndex);
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	commandList->OMSetRenderTargets(1, &rtvHandle, false, &dsvHandle);
+
+	// 画面全体をクリアする
+	float clearColor[] = { 0.1f,0.25f,0.5f,1.0f }; // 任意のクリアカラー (例: 暗い青色)
+	commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+	commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
+	// ビューポートとシザー矩形の設定
+	commandList->RSSetViewports(1, &viewport);
+	commandList->RSSetScissorRects(1, &scissorRect);
+}
+
+void DirectXCommon::PostDraw() {
+	assert(commandList != nullptr);
+	assert(swapChain != nullptr);
+	UINT bbIndex = swapChain->GetCurrentBackBufferIndex();
+	// 現在のバックバッファのインデックスを取得
+	UINT backBufferIndex = swapChain->GetCurrentBackBufferIndex();
+
+	// リソースバリアを使ってバックバッファを描画対象から表示状態に遷移
+	D3D12_RESOURCE_BARRIER barrier{};
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	barrier.Transition.pResource = swapChainResources[backBufferIndex].Get();
+	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET; // 描画後
+	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT; // 表示
+	commandList->ResourceBarrier(1, &barrier);
+
+	// コマンドリストのクローズ
+	HRESULT hr = commandList->Close();
+	assert(SUCCEEDED(hr));
+
+	// コマンドをキック（GPUに実行を指示）
+	ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
+	commandQueue->ExecuteCommandLists(1, ppCommandLists);
+
+
+
+	// フェンスの値を更新してGPUの処理完了を待機
+	fenceValue++;
+	commandQueue->Signal(fence.Get(), fenceValue);
+	if (fence->GetCompletedValue() < fenceValue) {
+		fence->SetEventOnCompletion(fenceValue, fenceEvent);
+		WaitForSingleObject(fenceEvent, INFINITE);
+	}
+
+	// コマンドアロケーターとコマンドリストをリセット
+	hr = commandAllocator->Reset();
+	assert(SUCCEEDED(hr));
+	hr = commandList->Reset(commandAllocator.Get(), nullptr);
+	assert(SUCCEEDED(hr));
+
+	// スワップチェーンで画面を表示
+	hr = swapChain->Present(1, 0); // 1: 垂直同期あり、0: 垂直同期なし
+	//assert(SUCCEEDED(hr));
+}
 
 void DirectXCommon::Initialize(WinApp* winApp)
 {

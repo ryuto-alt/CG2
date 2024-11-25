@@ -38,10 +38,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}
 		dxCommon->Begin(); // 描画開始
 
+
 		// - シーンの更新
 		// - オブジェクトの描画
 		// - 入力の処理
 		// - UIの描画
+
+		dxCommon->PreDraw();
+
+		dxCommon->PostDraw();
 
 		dxCommon->End();   // 描画終了
 	}
