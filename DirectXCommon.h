@@ -32,7 +32,7 @@ class DirectXCommon
 	void ScissorInitialize();
 	void DxcCompilerInitialize();
 	void ImguiInitialize();
-	
+	void RootSignature();
 
 public:
 	// 初期化
@@ -44,6 +44,7 @@ public:
 	void PreDraw();
 
 	void PostDraw();
+
 
 	// 描画後処理
 	void End();
@@ -75,7 +76,7 @@ public:
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> descriptorHeap,
 		uint32_t descriptorSize, uint32_t index);
 
-	ID3D12Device* GetDevice() const { return device.Get(); }
+	ID3D12Device* GetDevice() const { return device.Get(); };
 	ID3D12GraphicsCommandList* GetCommandList()const { return commandList.Get(); }
 
 	// CompileShader関数の作成
@@ -89,7 +90,9 @@ public:
 	Microsoft::WRL::ComPtr<ID3D12Resource> CreateBufferResource(size_t sizeInBytes);
 
 	// テクスチャリソースの生成
-	Microsoft::WRL::ComPtr<ID3D12Resource> CreateTextureResource(const DirectX::TexMetadata& metadata);
+	Microsoft::WRL::ComPtr<ID3D12Resource> CreateTextureResource(ID3D12Device*device,const DirectX::TexMetadata&metadata);
+
+	static DirectX::ScratchImage LoadTexture(const std::string& filePath);
 
 	// テクスチャデータの転送
 	[[nodiscard]]
@@ -99,6 +102,7 @@ public:
 
 	// 最大SRV数(最大テクスチャ枚数)
 	static const uint32_t kMaxSRVCount;
+	
 
 private:
 	// WindowsAPI
@@ -169,4 +173,6 @@ private:
 	void InitializeFixFPS();
 	// FPS固定更新
 	void UpdateFixFPS();
+	
+
 };

@@ -28,6 +28,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	DirectXCommon* dxCommon = new DirectXCommon;
 	dxCommon->Initialize(winApp);
 
+
+
+
+
+
+
+
 	// メインループ
 	MSG msg = {};
 	while (true) {
