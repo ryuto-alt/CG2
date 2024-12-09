@@ -1,70 +1,56 @@
-#include <wrl.h>
-#include <cassert>
 #include "Input.h"
+#include <cassert>
 
-void Input::Initialize(WinApp*winApp) {
-	HRESULT result;  // 追加
-	
-	// DirectInputのインスタンス生成
-	Microsoft::WRL::ComPtr<IDirectInput8> directInput = nullptr;
-	result = DirectInput8Create(winApp->GetHInstance(), DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&directInput, nullptr);
-	assert(SUCCEEDED(result));
+#pragma comment(lib,"dinput8.lib")
+#pragma comment(lib,"dxguid.lib")
 
-	//DirectInput初期化
+void Input::Initialize(WinApp* winApp)
+{
+	winApp_ = winApp;
+	HRESULT hr;
 
-	result = DirectInput8Create(
-		winApp->GetHInstance(), DIRECTINPUT_VERSION, IID_IDirectInput8,
-		(void**)&directInput, nullptr);
-	assert(SUCCEEDED(result));
+	//DirectInputのインスタンスを生成
+	hr = DirectInput8Create(winApp->GetHInstance(), DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&directInput, nullptr);
+	assert(SUCCEEDED(hr));
 
-	//キーボードデバイスの生成
-	result = directInput->CreateDevice(GUID_SysKeyboard, &keyboard, NULL);
-	assert(SUCCEEDED(result));
+	//キーボードデバイス生成
+	hr = directInput->CreateDevice(GUID_SysKeyboard, &keyboard, NULL);
+	assert(SUCCEEDED(hr));
 
-	//入力データの形式セット
-	result = keyboard->SetDataFormat(&c_dfDIKeyboard);
-	assert(SUCCEEDED(result));
+	//入力データ形式のセット
+	hr = keyboard->SetDataFormat(&c_dfDIKeyboard);
+	assert(SUCCEEDED(hr));
 
-	// 排他/非排他レベルのセット
-	result = keyboard->SetCooperativeLevel(winApp->GetHwnd(), DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY);
-	assert(SUCCEEDED(result));
-
-
-
-
+	//排他制御レベルのセット
+	hr = keyboard->SetCooperativeLevel(winApp->GetHwnd(), DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY);
+	assert(SUCCEEDED(hr));
 }
 
-
-
-void Input::update()
+void Input::Update()
 {
-	// 前回のキー状態を保存する
-	memcpy(prevKey, key, sizeof(key));
-	//キーボード情報の取得開始
+	//前回のキー入力を保存
+	memcpy(preKey, key, sizeof(key));
+	//キーボード情報の取得
 	keyboard->Acquire();
-	////全キーの入力情報を取得する
-	//BYTE key[256] = {};
+	//全キーボード入力情報を取得
 	keyboard->GetDeviceState(sizeof(key), key);
-
-
 }
 
-bool Input::PushKey(BYTE keyNumBer)
+
+
+
+bool Input::PushKey(BYTE keyNumber)
 {
-	//指定キーを押していればtrueを返す
-	if (key[keyNumBer]) {
+	if (key[keyNumber]) {
 		return true;
 	}
-	//そうでなければfalseを返す
 	return false;
 }
 
-bool Input::TrrigerKey(BYTE keyNumBer)
+bool Input::TriggerKey(BYTE keyNumber)
 {
-	//指定キーを押していればtrueを返す
-	if (key[keyNumBer] && prevKey[keyNumBer]==0) {
+	if (key[keyNumber] && !preKey[keyNumber]) {
 		return true;
 	}
-	//そうでなければfalseを返す
 	return false;
 }
