@@ -8,6 +8,8 @@
 #include "Vector4.h"
 #include "Matrix4x4.h"
 #include "Math.h"
+#include "SpriteCommon.h"
+#include "Sprite.h"
 
 #include <numbers>
 #include <algorithm>
@@ -144,6 +146,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// 入力初期化
 	input = new Input();
 	input->Initialize(winApp);
+
+	SpriteCommon* spriteCommon = nullptr;
+	spriteCommon = new SpriteCommon;
+	spriteCommon->Initialize();
+
+	Sprite* sprite = nullptr;
+	sprite = new Sprite;
+	sprite->Initialize();
 
 
 #pragma region RootSignatureを生成
@@ -679,6 +689,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	delete winApp;
 	delete dxCommon;
 	delete input;
-
+	delete sprite;
+	delete spriteCommon;
 	return 0;
 }
