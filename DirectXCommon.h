@@ -76,6 +76,10 @@ public:
 
 	DirectX::ScratchImage LoadTexture(const std::string& filePath);
 
+	const D3D12_DEPTH_STENCIL_DESC& GetDepthStencilDesc() const {
+		return depthStencilDesc;
+	}
+
 private:
 	//WindowsAPI
 	WinApp* winApp_ = nullptr;
@@ -119,6 +123,8 @@ private:
 	D3D12_RESOURCE_BARRIER barrier{};
 
 	std::chrono::steady_clock::time_point reference_;
+
+	D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
 
 
 private:
