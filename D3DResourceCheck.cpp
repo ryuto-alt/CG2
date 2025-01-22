@@ -4,9 +4,6 @@
 #include <dxgi1_6.h>
 #include <wrl.h>
 
-
-
-
 D3DResourceLeakChecker::~D3DResourceLeakChecker()
 {
 #pragma region ResourceCheck 

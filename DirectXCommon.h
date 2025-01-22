@@ -76,6 +76,8 @@ public:
 
 	DirectX::ScratchImage LoadTexture(const std::string& filePath);
 
+	void CommandKick();
+	static const uint32_t kMaxSRVCount;
 	const D3D12_DEPTH_STENCIL_DESC& GetDepthStencilDesc() const {
 		return depthStencilDesc;
 	}
