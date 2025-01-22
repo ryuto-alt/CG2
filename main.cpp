@@ -401,51 +401,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		input->Update();
 
-		////ゲームの処理
-		//if (input->PushKey(DIK_A)) {
-		//	transformModel.translate.x -= 0.01f;
-		//}
-		//if (input->PushKey(DIK_D)) {
-		//	transformModel.translate.x += 0.01f;
-		//}
-		//if (input->PushKey(DIK_W)) {
-		//	transformModel.translate.y += 0.01f;
-		//}
-		//if (input->PushKey(DIK_S)) {
-		//	transformModel.translate.y -= 0.01f;
-		//}
-
-/*#pragma region Transform用Matrix
-		Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translate);
-		Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translate);
-		Matrix4x4 viewMatrix = Inverse(cameraMatrix);
-		Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(WinApp::kClientWidth) / float(WinApp::kClientHeight), 0.1f, 100.0f);
-
-		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
-		wvpData->WVP = worldViewProjectionMatrix;
-		wvpData->World = worldMatrix;
-#pragma endregion
-
-
-#pragma region model用Matrix
-		Matrix4x4 worldMatrixmodel = MakeAffineMatrix(transformModel.scale, transformModel.rotate, transformModel.translate);
-		Matrix4x4 worldViewProjectionMatrixModel = Multiply(worldMatrixmodel, Multiply(viewMatrix, projectionMatrix));
-		transformationMatrixDataModel->WVP = worldViewProjectionMatrixModel;
-		transformationMatrixDataModel->World = worldMatrixmodel;
-#pragma endregion*/
-
 
 		for (Sprite* sprite : sprites) {
 			sprite->Update();
 		}
 
-
-		/*#pragma region material用Matrix
-				Matrix4x4 uvTransformMatrix = MakeScaleMatrix(uvTransformSprite.scale);
-				uvTransformMatrix = Multiply(uvTransformMatrix, MakeRotateZMatrix(uvTransformSprite.rotate.z));
-				uvTransformMatrix = Multiply(uvTransformMatrix, MakeTranslateMatrix(uvTransformSprite.translate));
-				materialDataSprite->uvTransform = uvTransformMatrix;
-		#pragma endregion*/
 
 
 		ImGui_ImplDX12_NewFrame();
@@ -472,16 +432,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}
 		ImGui::Separator();
 
-		// スフィアウィンドウ
-		if (ImGui::CollapsingHeader("3DObject")) {
-			ImGui::DragFloat3("Translation", &transform.translate.x, 0.01f);
-			ImGui::DragFloat3("Rotation", &transform.rotate.x, 0.01f);
-			ImGui::DragFloat2("Scale", &transform.scale.x, 0.01f);
-			if (ImGui::Button("Reset Transform")) {
-				transform = { {1.0f, 1.0f, 1.0f}, {0.0f, -1.5f, 0.0f}, {0.0f, 0.0f, 0.0f} };
-			}
-		}
-		ImGui::Separator();
 
 		// モデルウィンドウ
 		if (ImGui::CollapsingHeader("Model"))
@@ -495,28 +445,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}
 		ImGui::Separator();
 
-		//// スプライトウィンドウ
-		//if (ImGui::CollapsingHeader("2DSprite")) {
-		//	Vector2 size = sprite->GetSize();
-		//	Vector2 position = sprite->GetPosition();
-		//	float rotation = sprite->GetRotation();
-		//	Vector4 spritecolor = sprite->GetColor();
-		// 
-		//	ImGui::ColorEdit4("*spriteColor", &spritecolor.x);
-		//	ImGui::DragFloat2("*ScaleSprite", &size.x, 0.1f);
-		//	ImGui::DragFloat("*RotateSprite", &rotation, 0.1f);
-		//	ImGui::DragFloat2("*TranslateSprite", &position.x);
-		// 
-		//	sprite->setColor(spritecolor);
-		//	sprite->SetPosition(position);
-		//	sprite->SetRotation(rotation);
-		//	sprite->SetSize(size);
-		// 
-		//	if (ImGui::Button("Reset Transform")) {
-		//		transformSprite = { {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} };
-		//	}
-		//}
-		//ImGui::Separator();
 
 		// UVTransform
 		if (ImGui::CollapsingHeader("UVTransform")) {
@@ -538,29 +466,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		for (Sprite* sprite : sprites) {
 			sprite->Draw();
 		}
-
-		//#pragma region スフィアの描画
-		//		dxCommon->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferView);
-		//		//現状を設定。POSに設定しているものとはまた別。おなじ物を設定すると考えておけばいい
-		//		dxCommon->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
-		//		//wvp用のCBufferの場所を設定
-		//		dxCommon->GetCommandList()->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());
-		//		dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
-		//		dxCommon->GetCommandList()->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
-		//		//描画！
-		//		//dxCommon->GetCommandList()->DrawInstanced(kSubdivision * kSubdivision * 6, 1, 0, 0);
-		//#pragma endregion
-
-
-		//#pragma region Modelの描画
-		//		dxCommon->GetCommandList()->IASetVertexBuffers(0, 1, &VertexBufferViewModel);
-		//		//wvp用のCBufferの場所を設定
-		//		dxCommon->GetCommandList()->SetGraphicsRootConstantBufferView(1, transformationMatrixResourceModel->GetGPUVirtualAddress());
-		//		dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU3);
-		//		dxCommon->GetCommandList()->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
-		//		//描画！
-		//		//dxCommon->GetCommandList()->DrawInstanced(UINT(modelData.vertices.size()), 1, 0, 0);
-		//#pragma endregion
 
 
 		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), dxCommon->GetCommandList());
