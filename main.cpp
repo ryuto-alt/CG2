@@ -344,33 +344,38 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #pragma endregion
 
 
-#pragma region Texturを読む
-	std::string textureFilePath[2]{ "Resources/monsterBall.png" ,"Resources/uvChecker.png" };
-#pragma endregion 
+#pragma region Textureを読む
+	std::string textureFilePath[2]{ "Resources/monsterBall.png", "Resources/uvChecker.png" };
+#pragma endregion
 
-
-	std::vector<Sprite*>sprites;
-	for (uint32_t i = 0; i < 10; ++i) {
+	std::vector<Sprite*> sprites;
+	for (uint32_t i = 0; i < 5; ++i) {
 		Sprite* sprite = new Sprite();
-		sprite->Initialize(spriteCommon, textureFilePath[1]);
+		// テクスチャを交互に設定
+		std::string filePath = textureFilePath[i % 2];
+		sprite->Initialize(spriteCommon, filePath);
 		sprites.push_back(sprite);
 	}
 
 	int i = 0;
 	for (Sprite* sprite : sprites) {
-		Vector2 position = sprite->GetPosition();
-		Vector2 size = sprite->GetSize();
+		Vector2 position;
+		Vector2 size;
 
-		position.x = 200.0f * i;
-		position.y = 200.0f;
-		size = Vector2(100, 100);
+		// スプライトの位置とサイズを設定（等間隔に配置）
+		position.x = 100.0f + 150.0f * i; // スプライト同士の間隔を150に設定
+		position.y = 200.0f;              // 画面中央付近の高さ
+		size = Vector2(128, 128);         // スプライトサイズを統一
 
 		sprite->SetPosition(position);
 		sprite->SetSize(size);
-		sprite->SetAnchorPoint(Vector2{ 0.0f,0.0f });
+		sprite->SetAnchorPoint(Vector2{ 0.5f, 0.5f }); // 中央を基準に配置
 		sprite->SetIsFlipY(0);
-		sprite->SetTextureLeftTop(Vector2{ i * 64.0f,0.0f });
-		sprite->SetTextureSize(Vector2{ 64.0f,64.0f });
+
+		// テクスチャの左上位置とサイズを設定
+		sprite->SetTextureLeftTop(Vector2{ 0.0f, 0.0f });
+		sprite->SetTextureSize(Vector2{ 64.0f, 64.0f });
+
 		i++;
 	}
 
@@ -416,12 +421,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		// Color Edit ウィンドウ
 		if (ImGui::CollapsingHeader("SetColor")) {
 			ImGui::ColorEdit4("materialData", &materialDataSphere->color.x);
-		}
-		ImGui::Separator();
-
-		// Texture変更
-		if (ImGui::CollapsingHeader("Texture change")) {
-			ImGui::Checkbox("useMonsterBall", &useMonsterBall);
 		}
 		ImGui::Separator();
 
