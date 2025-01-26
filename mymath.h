@@ -30,6 +30,40 @@ struct Transform{
 	Vector3 rotate;
 	Vector3 translata;
 };
+
+
+
+
+struct VertexData {
+	Vector4	position;
+	Vector2 texcoord;
+	Vector3 normal;
+};
+
+struct Material {
+	Vector4 color;
+	int32_t enableLighting;
+	float padding[3];
+	Matrix4x4 uvTransform;
+	float shininess; // 追加
+};
+
+struct TransformationMatrix {
+	Matrix4x4 wvp;
+	Matrix4x4 World;
+};
+
+struct DirectionalLight {
+	Vector4 color;
+	Vector3 direction;
+	float intensity;
+};
+
+struct CameraForGPU
+{
+	Vector3 worldPosition;
+};
+
 Matrix4x4 Multiply(const Matrix4x4& m1, const Matrix4x4& m2) {
 
 	Matrix4x4 result;
