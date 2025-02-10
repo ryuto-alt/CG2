@@ -67,8 +67,7 @@ public:
 
 	ID3D12Device* GetDevice() const { return device.Get(); }
 	ID3D12GraphicsCommandList* GetCommandList()const { return commandList.Get(); }
-
-	IDxcBlob* CompileShader(
+	Microsoft::WRL::ComPtr<IDxcBlob>CompileShader(
 		//ComilerするSahaderファイルへのパス
 		const std::wstring& filePath,
 		//compilerに使用するProfile
