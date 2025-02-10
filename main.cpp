@@ -126,7 +126,7 @@ ModelData LoadObjFile(const std::string& directoryPath, const std::string& filen
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	D3DResourceLeakChecker leakCheck;
 
-	CoInitializeEx(0, COINIT_MULTITHREADED);
+
 
 	OutputDebugStringA("Hello,DirectX!\n");
 
