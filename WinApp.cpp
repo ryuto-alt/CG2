@@ -63,6 +63,7 @@ void WinApp::Finalize()
 {
 	CloseWindow(hwnd);
 	CoUninitialize();
+
 }
 
 bool WinApp::ProcessMessage()

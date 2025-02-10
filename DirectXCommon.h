@@ -45,6 +45,8 @@ public:
 	//描画後処理
 	void End();
 
+	void Finalize();
+
 
 	
 	D3D12_CPU_DESCRIPTOR_HANDLE GetSRVCPUDescriptorHandle(uint32_t index);

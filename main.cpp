@@ -20,6 +20,23 @@
 #include "Logger.h"
 
 
+#pragma region ConvertString
+std::string ConvertString(const std::wstring& str) {
+	if (str.empty()) {
+		return std::string();
+	}
+
+	auto sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, str.data(), static_cast<int>(str.size()), NULL, 0, NULL, NULL);
+	if (sizeNeeded == 0) {
+		return std::string();
+	}
+	std::string result(sizeNeeded, 0);
+	WideCharToMultiByte(CP_UTF8, 0, str.data(), static_cast<int>(str.size()), result.data(), sizeNeeded, NULL, NULL);
+	return result;
+}
+#pragma endregion
+
+
 #pragma region MaterialData
 MaterialData LoadMaterialTemplateFile(const std::string& directorypath, const std::string& filename) {
 
@@ -672,8 +689,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #ifdef _DEBUG
 #endif //_DEBUG
 #pragma endregion
-	dxCommon->ReleaseFenceEvent();
-
+	dxCommon->Finalize();
 	// 終了処理
 	winApp->Finalize();
 	// 解放処理

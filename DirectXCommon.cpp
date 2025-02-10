@@ -356,6 +356,17 @@ void DirectXCommon::End()
 	assert(SUCCEEDED(hr));
 	hr = commandList->Reset(commandAllocator.Get(), nullptr);
 	assert(SUCCEEDED(hr));
+
+
+}
+
+void DirectXCommon::Finalize()
+{
+	if (fenceEvent)
+	{
+		CloseHandle(fenceEvent);
+		fenceEvent = nullptr;
+	}
 }
 
 
