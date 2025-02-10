@@ -367,6 +367,9 @@ void DirectXCommon::Finalize()
 		CloseHandle(fenceEvent);
 		fenceEvent = nullptr;
 	}
+	ImGui_ImplDX12_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
 }
 
 
