@@ -33,9 +33,13 @@ class DirectXCommon
 	void DxcCompilerInitialize();
 	void ImguiInitialize();
 
+	
+
 public:
 	//初期化
 	void Initialize(WinApp* winApp);
+
+	void ReleaseFenceEvent();
 	//描画前処理
 	void Begin();
 	//描画後処理
@@ -49,6 +53,7 @@ public:
 	D3D12_GPU_DESCRIPTOR_HANDLE GetRTVGPUDescriptorHandle(uint32_t index);
 	D3D12_CPU_DESCRIPTOR_HANDLE GetDSVCPUDescriptorHandle(uint32_t index);
 	D3D12_GPU_DESCRIPTOR_HANDLE GetDSVGPUDescriptorHandle(uint32_t index);
+
 
 	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> descriptorHeap,
@@ -112,9 +117,14 @@ private:
 
 	D3D12_RECT scissorRect{};
 
-	IDxcUtils* dxcUtils = nullptr;
-	IDxcCompiler3* dxcCompiler = nullptr;
-	IDxcIncludeHandler* includeHandler = nullptr;
+	//IDxcUtils* dxcUtils = nullptr;
+	//IDxcCompiler3* dxcCompiler = nullptr;
+	//IDxcIncludeHandler* includeHandler = nullptr;
+
+	Microsoft::WRL::ComPtr<IDxcUtils> dxcUtils = nullptr;
+	Microsoft::WRL::ComPtr<IDxcCompiler3> dxcCompiler = nullptr;
+	Microsoft::WRL::ComPtr<IDxcIncludeHandler> includeHandler = nullptr;
+
 
 	D3D12_RESOURCE_BARRIER barrier{};
 

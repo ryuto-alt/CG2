@@ -672,6 +672,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #ifdef _DEBUG
 #endif //_DEBUG
 #pragma endregion
+	dxCommon->ReleaseFenceEvent();
 
 	// 終了処理
 	winApp->Finalize();

@@ -252,6 +252,16 @@ void DirectXCommon::ImguiInitialize()
 		srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 }
 
+void DirectXCommon::ReleaseFenceEvent()
+{
+	// fenceEventが有効なら閉じる
+	if (fenceEvent)
+	{
+		CloseHandle(fenceEvent);
+		fenceEvent = nullptr;
+	}
+}
+
 
 void DirectXCommon::Initialize(WinApp* winApp)
 {
@@ -443,15 +453,18 @@ IDxcBlob* DirectXCommon::CompileShader(const std::wstring& filePath, const wchar
 		L"-Od",//最適化を外しておく
 		L"-Zpr",//メモリレイアウトは行優先
 	};
+
+
+	
 	//実際にshaderをコンパイルする
 	IDxcResult* shaderResult = nullptr;
 	hr = dxcCompiler->Compile(
 		&shaderSourceBuffer,
-		arguments,			
+		arguments,
 		_countof(arguments),
-		includeHandler,		
+		includeHandler.Get(),  // ここをincludeHandler.Get()に変更
 		IID_PPV_ARGS(&shaderResult)
-	);//コンパイルエラーではなくDXCが起動できない致命的な状況
+	);//コンパイルエラーではなくDXCが起動できへん致命的な状況
 	assert(SUCCEEDED(hr));
 
 	IDxcBlobUtf8* shaderError = nullptr;
