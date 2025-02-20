@@ -34,6 +34,23 @@
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+//Tramsform変数を作る
+Transform transform{ {1.0f,1.0f,1.0f},{0.0f,3.130f,0.0f},{0.0f,0.0f,0.0f} };
+Transform cameraTransform{ {1.5f,1.5f,1.5f},{0.0f,0.0f,0.0f},{0.0f,1.0f,-10.0f} };
+Transform transformSprite{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
+
+
+// コールバック関数のプロトタイプ宣言
+typedef void (*callback)(int result);
+
+// 判定を行うコールバック関数
+void Rotate_result(int result) {
+
+	transform.rotate.x += 0.05f;
+	transform.rotate.y += 0.05f;
+	transform.rotate.z += 0.1f;
+}
+
 
 struct VertexData {
 	Vector4 position;
@@ -67,15 +84,6 @@ struct DirectionalLight {
 struct TransformationMatrix {
 	Matrix4x4 WVP;
 	Matrix4x4 world;
-};
-
-
-
-
-Transform transformSprite{
-	{1.0f, 1.0f, 1.0f},  // スケール
-	{0.0f, 0.0f, 0.0f},  // 回転
-	{0.0f, 0.0f, 0.0f}   // 位置
 };
 
 Transform uvTransformSprite{
@@ -116,6 +124,7 @@ enum BlendMode {
 	// 利用してはいけない
 	kCountOfBlendMode,
 };
+
 
 
 const int32_t kClientWidth = 1280;
@@ -1279,7 +1288,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	std::random_device seedGenerator;
 	std::mt19937 randomEngine(seedGenerator());
 	std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
-	
+
 	for (uint32_t index = 0; index < kNumInstance; ++index) {
 		particles[index].velocity = { 0.0f,1.0f,0.0f };
 		particles[index].transform.scale = { 1.0f,1.0f,1.0f };
@@ -1396,10 +1405,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 #pragma endregion
 
-	//Tramsform変数を作る
-	Transform transform{ {1.0f,1.0f,1.0f},{0.0f,3.130f,0.0f},{0.0f,0.0f,0.0f} };
-	Transform cameraTransform{ {1.5f,1.5f,1.5f},{0.0f,0.0f,0.0f},{0.0f,1.0f,-10.0f} };
-	Transform transformSprite{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 
 	bool useMonsterBall = true;
 
@@ -1458,6 +1463,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			ImGui::Render();
 
 			///-----ゲームの処理-----///
+
+
+
+			callback callback = Rotate_result;
+			callback(0);
+
 
 			//transform.rotate.y = 3.130f;
 
