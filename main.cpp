@@ -1,6 +1,5 @@
 #include <string>
 #include <format>
-
 #include <windows.h>
 #pragma comment(lib,"dxguid.lib")
 #include "Vector2.h"
@@ -23,479 +22,394 @@
 #include "TextureManager.h"
 #include "math.h"
 
-
-#pragma region MaterialData
-MaterialData LoadMaterialTemplateFile(const std::string& directorypath, const std::string& filename) {
-
-	MaterialData materialData;//構築するMaterialData
-	std::string line;//ファイルから読んだ1行を格納するもの
-	std::ifstream file(directorypath + "/" + filename);//ファイルを開く
-	assert(file.is_open());//とりあえず開けなっかたら止める
-	while (std::getline(file, line)) {
-		std::string identifile;
-		std::stringstream s(line);
-		s >> identifile;
-
-		//identifierの応じた処理
-		if (identifile == "map_Kd") {
-
-			std::string textureFilename;
-			s >> textureFilename;
-			//連結してファイルパスにする
-			materialData.textureFilePath = directorypath + "/" + textureFilename;
-		}
-	}
-	return materialData;
-}
-#pragma endregion
-
-
-#pragma region LoadObjeFil関数
-ModelData LoadObjFile(const std::string& directoryPath, const std::string& filename) {
-
-	ModelData modelData;//構築するModekData
-	std::vector<Vector4>positions;//位置
-	std::vector<Vector3>normals;//法線
-	std::vector<Vector2>texcoords;//テクスチャ座標
-	std::string line;//ファイルから読んだ1行を格納するもの
-
-	//ファイル読み込み
-	std::ifstream file(directoryPath + "/" + filename);//faileを開く
-	assert(file.is_open());//開けなかったら止める
-
-	while (std::getline(file, line)) {
-		std::string identifier;
-		std::istringstream s(line);
-		s >> identifier;//先頭の識別子を読む
-
-		if (identifier == "v") {
-
-			Vector4 position;
-			s >> position.x >> position.y >> position.z;
-			position.w = 1.0f;
-			position.x *= -1;
-			positions.push_back(position);
-		}
-		else if (identifier == "vt") {
-			Vector2 texcoord;
-			s >> texcoord.x >> texcoord.y;
-			texcoord.y = 1 - texcoord.y;
-			texcoords.push_back(texcoord);
-		}
-		else if (identifier == "vn") {
-
-			Vector3 normal;
-			s >> normal.x >> normal.y >> normal.z;
-			normal.x *= -1;
-			normals.push_back(normal);
-		}
-		else if (identifier == "f") {
-
-			VertexData triangle[3];
-			//面は三角形限定。その他は未対応
-			for (int32_t faceVertex = 0; faceVertex < 3; ++faceVertex) {
-				std::string vertexDefinition;
-				s >> vertexDefinition;
-				//頂点の要素へのIndexは「位置・UV・法線」で格納されているので、分解してIndexを取得する
-				std::istringstream v(vertexDefinition);
-				uint32_t elementIndices[3];
-				for (int32_t element = 0; element < 3; ++element) {
-					std::string index;
-					std::getline(v, index, '/');//区切りでインデックスを読んでいく
-					elementIndices[element] = std::stoi(index);
-				}
-				//要素へのIndexから、実際の要素の値を取得して、頂点を構築する
-				Vector4 position = positions[elementIndices[0] - 1];
-				Vector2 texcoord = texcoords[elementIndices[1] - 1];
-				Vector3 normal = normals[elementIndices[2] - 1];
-
-				//VertexData veretex = { position,texcoord,normal };
-				//modelData.vertices.push_back(veretex);
-				triangle[faceVertex] = { position,texcoord,normal };
-
-			}
-			//頂点を逆順で登録刷ることで、周り順を逆にする
-			modelData.vertices.push_back(triangle[2]);
-			modelData.vertices.push_back(triangle[1]);
-			modelData.vertices.push_back(triangle[0]);
-
-		}
-		else if (identifier == "mtllib") {
-
-			//materialTemlateLibraryファイルの名前を取得する
-			std::string materialFilename;
-			s >> materialFilename;
-			//基本的にobjファイルと同一階層にmtlは存在させるので、ディレクトリ名とファイル名を渡す
-			modelData.material = LoadMaterialTemplateFile(directoryPath, materialFilename);
-		}
-	}
-	return modelData;
-}
-#pragma endregion 
-
+// 新しく追加したクラス
+#include "Model.h"
+#include "Object3d.h"
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
-	D3DResourceLeakChecker leakCheck;
-
-	CoInitializeEx(0, COINIT_MULTITHREADED);
-
-	OutputDebugStringA("HEllo,DirectX!\n");
-
-	// ポインタ
-	WinApp* winApp = nullptr;
-	DirectXCommon* dxCommon = nullptr;
-	Input* input = nullptr;
-	SpriteCommon* spriteCommon = nullptr;
-
-	// WindowsAPI初期化
-	winApp = new WinApp;
-	winApp->Initialize();
-
-	// DX初期化
-	dxCommon = new DirectXCommon();
-	dxCommon->Initialize(winApp);
-
-	//テクスチャマネージャの初期化
-	TextureManager::GetInstance()->Initialize(dxCommon);
-
-	// 入力初期化
-	input = new Input();
-	input->Initialize(winApp);
-
-	// スプライト共通部分の初期化
-	spriteCommon = new SpriteCommon();
-	spriteCommon->Initialize(dxCommon);
-
-
-	Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature = nullptr;
-	Microsoft::WRL::ComPtr<ID3D12PipelineState> graphicsPipelineState = nullptr;
-
-
-#pragma region Resource
-	const uint32_t kSubdivision = 512;
-	ModelData modelData = LoadObjFile("resources", "axis.obj");
-
-#pragma region VertexResourceを生成
-	Microsoft::WRL::ComPtr<ID3D12Resource> vertexResource = dxCommon->CreateBufferResource(sizeof(VertexData) * kSubdivision * kSubdivision * 6);
-
-#pragma region ModelResourceを生成
-	Microsoft::WRL::ComPtr<ID3D12Resource> vertexResourceModel = dxCommon->CreateBufferResource(sizeof(VertexData) * modelData.vertices.size());
-#pragma endregion
-
-
-#pragma region vertexResourceModel頂点バッファーを作成する
-	D3D12_VERTEX_BUFFER_VIEW VertexBufferViewModel{};
-	VertexBufferViewModel.BufferLocation = vertexResourceModel->GetGPUVirtualAddress();
-	VertexBufferViewModel.SizeInBytes = UINT(sizeof(VertexData) * modelData.vertices.size());
-	VertexBufferViewModel.StrideInBytes = sizeof(VertexData);
-	VertexData* vertexDataModel = nullptr;
-	vertexResourceModel->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataModel));
-	std::memcpy(vertexDataModel, modelData.vertices.data(), sizeof(VertexData) * modelData.vertices.size());
-#pragma endregion
-
-
-#pragma region vertexResource頂点バッファーを作成
-	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{ };
-	vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
-	vertexBufferView.SizeInBytes = sizeof(VertexData) * kSubdivision * kSubdivision * 6;
-	vertexBufferView.StrideInBytes = sizeof(VertexData);
-	VertexData* vertexData = nullptr;
-	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
-#pragma endregion
-
-
-#pragma region 基準点
-	//経度分割1つ分の経度φd
-	const float kLonEvery = 2 * std::numbers::pi_v<float> / (float)kSubdivision;
-	//緯度分割１つ分の緯度Θd
-	const float kLatEvery = std::numbers::pi_v<float> / (float)kSubdivision;
-	//緯度方向に分割しながら線を描く
-	const float w = 2.0f;
-	for (uint32_t latIndex = 0; latIndex < kSubdivision; ++latIndex) {
-		float lat = -std::numbers::pi_v<float> / 2.0f + kLatEvery * latIndex;//θ
-		for (uint32_t lonIndex = 0; lonIndex < kSubdivision; ++lonIndex) {
-			//テクスチャ用のTexcoord
-
-			//書き込む最初の場所
-			uint32_t start = (latIndex * kSubdivision + lonIndex) * 6;
-			float lon = lonIndex * kLonEvery;
-			//基準点a
-			vertexData[start].position.x = std::cosf(lat) * std::cosf(lon);
-			vertexData[start].position.y = std::sinf(lat);
-			vertexData[start].position.z = std::cosf(lat) * std::sinf(lon);
-			vertexData[start].position.w = w;
-			vertexData[start].normal.x = vertexData[start].position.x;
-			vertexData[start].normal.y = vertexData[start].position.y;
-			vertexData[start].normal.z = vertexData[start].position.z;
-			vertexData[start].texcoord = { float(lonIndex) / float(kSubdivision), 1.0f - float(latIndex) / float(kSubdivision) };
-			//基準点b
-			start++;
-			vertexData[start].position.x = std::cosf(lat + kLatEvery) * std::cosf(lon);
-			vertexData[start].position.y = std::sinf(lat + kLatEvery);
-			vertexData[start].position.z = std::cosf(lat + kLatEvery) * std::sinf(lon);
-			vertexData[start].position.w = w;
-			vertexData[start].normal.x = vertexData[start].position.x;
-			vertexData[start].normal.y = vertexData[start].position.y;
-			vertexData[start].normal.z = vertexData[start].position.z;
-			vertexData[start].texcoord = { float(lonIndex) / float(kSubdivision), 1.0f - float(latIndex + 1.0f) / float(kSubdivision) };
-			//基準点c
-			start++;
-			vertexData[start].position.x = std::cosf(lat) * std::cosf(lon + kLonEvery);
-			vertexData[start].position.y = std::sinf(lat);
-			vertexData[start].position.z = std::cosf(lat) * std::sinf(lon + kLonEvery);
-			vertexData[start].position.w = w;
-			vertexData[start].normal.x = vertexData[start].position.x;
-			vertexData[start].normal.y = vertexData[start].position.y;
-			vertexData[start].normal.z = vertexData[start].position.z;
-			vertexData[start].texcoord = { float(lonIndex + 1.0f) / float(kSubdivision), 1.0f - float(latIndex) / float(kSubdivision) };
-
-			//基準点c
-			start++;
-			vertexData[start].position.x = std::cosf(lat) * std::cosf(lon + kLonEvery);
-			vertexData[start].position.y = std::sinf(lat);
-			vertexData[start].position.z = std::cosf(lat) * std::sinf(lon + kLonEvery);
-			vertexData[start].position.w = w;
-			vertexData[start].normal.x = vertexData[start].position.x;
-			vertexData[start].normal.y = vertexData[start].position.y;
-			vertexData[start].normal.z = vertexData[start].position.z;
-			vertexData[start].texcoord = { float(lonIndex + 1.0f) / float(kSubdivision), 1.0f - float(latIndex) / float(kSubdivision) };
-
-			//基準点b
-			start++;
-			vertexData[start].position.x = std::cosf(lat + kLatEvery) * std::cosf(lon);
-			vertexData[start].position.y = std::sinf(lat + kLatEvery);
-			vertexData[start].position.z = std::cosf(lat + kLatEvery) * std::sinf(lon);
-			vertexData[start].position.w = w;
-			vertexData[start].normal.x = vertexData[start].position.x;
-			vertexData[start].normal.y = vertexData[start].position.y;
-			vertexData[start].normal.z = vertexData[start].position.z;
-			vertexData[start].texcoord = { float(lonIndex) / float(kSubdivision), 1.0f - float(latIndex + 1.0f) / float(kSubdivision) };
-
-			//基準点d
-			start++;
-			vertexData[start].position.x = std::cosf(lat + kLatEvery) * std::cosf(lon + kLonEvery);
-			vertexData[start].position.y = std::sinf(lat + kLatEvery);
-			vertexData[start].position.z = std::cosf(lat + kLatEvery) * std::sinf(lon + kLonEvery);
-			vertexData[start].position.w = w;
-			vertexData[start].normal.x = vertexData[start].position.x;
-			vertexData[start].normal.y = vertexData[start].position.y;
-			vertexData[start].normal.z = vertexData[start].position.z;
-			vertexData[start].texcoord = { float(lonIndex + 1) / float(kSubdivision), 1.0f - float(latIndex + 1) / float(kSubdivision) };
-		}
-	}
-#pragma endregion
-
-
-#pragma region Material用のResourceを作る
-	Microsoft::WRL::ComPtr<ID3D12Resource> materialResource = dxCommon->CreateBufferResource(sizeof(Material));
-	//マテリアルにデータを書き込む	
-	Material* materialDataSphere = nullptr;
-	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialDataSphere));
-	//色
-	materialDataSphere->color = { Vector4(1.0f, 1.0f, 1.0f, 1.0f) };
-	materialDataSphere->enableLighting = true;
-	materialDataSphere->uvTransform = MakeIdentity4x4();
-#pragma endregion
-
-
-#pragma region WVP用のResourceを作る
-	Microsoft::WRL::ComPtr<ID3D12Resource> wvpResource = dxCommon->CreateBufferResource(sizeof(TransformationMatrix));
-	//データを書き込む
-	TransformationMatrix* wvpData = nullptr;
-	//書き込むためのアドレスを取得
-	wvpResource->Map(0, nullptr, reinterpret_cast<void**>(&wvpData));
-	//単位行列を書き込む
-	wvpData->WVP = MakeIdentity4x4();
-	wvpData->World = MakeIdentity4x4();
-#pragma endregion
-
-
-#pragma region Model用のResourceを作る
-	Microsoft::WRL::ComPtr<ID3D12Resource> materialResourceModel = dxCommon->CreateBufferResource(sizeof(Material));
-	//マテリアルにデータを書き込む	
-	Material* materialDataModel = nullptr;
-	materialResourceModel->Map(0, nullptr, reinterpret_cast<void**>(&materialDataModel));
-	//色
-	materialDataModel->color = { Vector4(1.0f, 1.0f, 1.0f, 1.0f) };
-	materialDataModel->enableLighting = true;
-	materialDataModel->uvTransform = MakeIdentity4x4();
-#pragma endregion
-
-
-#pragma region ModelTransform用のResourceを作る
-	Microsoft::WRL::ComPtr<ID3D12Resource> transformationMatrixResourceModel = dxCommon->CreateBufferResource(sizeof(TransformationMatrix));
-	//データを書き込む
-	TransformationMatrix* transformationMatrixDataModel = nullptr;
-	//書き込むためのアドレスを取得
-	transformationMatrixResourceModel->Map(0, nullptr, reinterpret_cast<void**>(&transformationMatrixDataModel));
-	//単位行列を書き込む
-	transformationMatrixDataModel->WVP = MakeIdentity4x4();
-	transformationMatrixDataModel->World = MakeIdentity4x4();
-#pragma endregion
-
-
-#pragma region 平行光源用のResourceを作る
-	Microsoft::WRL::ComPtr<ID3D12Resource> directionalLightResource = dxCommon->CreateBufferResource(sizeof(DirectionalLight));
-	DirectionalLight* directionalLightData = nullptr;
-	directionalLightResource->Map(0, nullptr, reinterpret_cast<void**>(&directionalLightData));
-	directionalLightData->color = { 1.0f,1.0f,1.0f,1.0f };
-	directionalLightData->direction = { 0.0f,-1.0f,1.0f };
-	directionalLightData->intensity = 1.0f;
-#pragma endregion
-
-
-#pragma region Texturを読む
-	std::string textureFilePath[2]{ "Resources/monsterBall.png" ,"Resources/uvChecker.png" };
-#pragma endregion 
-
-
-	std::vector<Sprite*>sprites;
-	for (uint32_t i = 0; i < 10; ++i) {
-		Sprite* sprite = new Sprite();
-		sprite->Initialize(spriteCommon, textureFilePath[1]);
-		sprites.push_back(sprite);
-	}
-
-	int i = 0;
-	for (Sprite* sprite : sprites) {
-		Vector2 position = sprite->GetPosition();
-		Vector2 size = sprite->GetSize();
-
-		position.x = 200.0f * i;
-		position.y = 200.0f;
-		size = Vector2(100, 100);
-
-		sprite->SetPosition(position);
-		sprite->SetSize(size);
-		sprite->SetAnchorPoint(Vector2{ 0.0f,0.0f });
-		sprite->SetIsFlipY(0);
-		sprite->SetTextureLeftTop(Vector2{ i * 64.0f,0.0f });
-		sprite->SetTextureSize(Vector2{ 64.0f,64.0f });
-		i++;
-	}
-
-	Vector2 rotation{ 0 };
-
-
-#pragma region Transform変数
-	Transform transform{ {1.0f,1.0f,1.0f},{0.0f,-1.5f,0.0f},{0.0f,0.0f,0.0f } };
-
-#pragma region cameraTransform変数
-	Transform cameraTransform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,-5.0f} };
-
-#pragma region uvspriteTransform変数
-	Transform uvTransformSprite{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f} ,{0.0f,0.0f,0.0f} };
-
-#pragma region model変数
-	Transform transformModel = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f} ,{0.0f,0.0f,0.0f} };
-#pragma endregion
-
-	bool useMonsterBall = false;
-
-	while (true) {
-		//Windowsのメッセージ処理
-		if (winApp->ProcessMessage()) {
-			//ゲームループを抜ける
-			break;
-		}
-
-		input->Update();
-
-
-		for (Sprite* sprite : sprites) {
-			sprite->Update();
-		}
-
-
-
-		ImGui_ImplDX12_NewFrame();
-		ImGui_ImplWin32_NewFrame();
-		ImGui::NewFrame();
-		ImGui::Begin("Settings");
-
-		// Color Edit ウィンドウ
-		if (ImGui::CollapsingHeader("SetColor")) {
-			ImGui::ColorEdit4("materialData", &materialDataSphere->color.x);
-		}
-		ImGui::Separator();
-
-		// Texture変更
-		if (ImGui::CollapsingHeader("Texture change")) {
-			ImGui::Checkbox("useMonsterBall", &useMonsterBall);
-		}
-		ImGui::Separator();
-
-		// Lighting
-		if (ImGui::CollapsingHeader("Lighting")) {
-			ImGui::ColorEdit4("LightSetColor", &directionalLightData->color.x);
-			ImGui::DragFloat3("directionalLight", &directionalLightData->direction.x, 0.01f, -1.0f, 1.0f);
-		}
-		ImGui::Separator();
-
-
-		// モデルウィンドウ
-		if (ImGui::CollapsingHeader("Model"))
-		{
-			ImGui::DragFloat3("ModelTranslate", &transformModel.translate.x, 0.01f);
-			ImGui::DragFloat3("ModelRotate", &transformModel.rotate.x, 0.01f);
-			ImGui::DragFloat3("ModelScale", &transformModel.scale.x, 0.01f);
-			if (ImGui::Button("Reset Transform")) {
-				transformModel = { {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} };
-			}
-		}
-		ImGui::Separator();
-
-
-		// UVTransform
-		if (ImGui::CollapsingHeader("UVTransform")) {
-			ImGui::DragFloat2("UVTranslate", &uvTransformSprite.translate.x, 0.01f, -10.0f, 10.0f);
-			ImGui::DragFloat2("UVScale", &uvTransformSprite.scale.x, 0.01f, -10.0f, 10.0f);
-			ImGui::SliderAngle("UVRotate", &uvTransformSprite.rotate.z);
-		}
-		ImGui::Separator();
-
-
-		ImGui::End();
-		ImGui::Render();
-
-		//DirectXの描画準備
-		dxCommon->Begin();
-		//Spriteの描画準備
-		spriteCommon->CommonDraw();
-
-		for (Sprite* sprite : sprites) {
-			sprite->Draw();
-		}
-
-
-		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), dxCommon->GetCommandList());
-
-		dxCommon->End();
-	}
-
-#pragma region 解放処理
-
-	ImGui_ImplDX12_Shutdown();
-	ImGui_ImplWin32_Shutdown();
-	ImGui::DestroyContext();
-
-	/*CloseHandle(fenceEvent);*/
-
-#ifdef _DEBUG
-#endif //_DEBUG
-#pragma endregion
-
-	// 終了処理
-	winApp->Finalize();
-	// 解放処理
-	TextureManager::GetInstance()->Finalize();
-	delete winApp;
-	delete dxCommon;
-	delete input;
-	delete spriteCommon;
-	for (Sprite* sprite : sprites) {
-		delete sprite; // 各Spriteオブジェクトの削除
-	}
-
-	return 0;
+    D3DResourceLeakChecker leakCheck;
+
+    CoInitializeEx(0, COINIT_MULTITHREADED);
+
+    OutputDebugStringA("Hello, DirectX!\n");
+
+    // ポインタ
+    WinApp* winApp = nullptr;
+    DirectXCommon* dxCommon = nullptr;
+    Input* input = nullptr;
+    SpriteCommon* spriteCommon = nullptr;
+
+    // WindowsAPI初期化
+    winApp = new WinApp;
+    winApp->Initialize();
+
+    // DX初期化
+    dxCommon = new DirectXCommon();
+    dxCommon->Initialize(winApp);
+
+    // テクスチャマネージャの初期化
+    TextureManager::GetInstance()->Initialize(dxCommon);
+
+    // 入力初期化
+    input = new Input();
+    input->Initialize(winApp);
+
+    // スプライト共通部分の初期化
+    spriteCommon = new SpriteCommon();
+    spriteCommon->Initialize(dxCommon);
+
+    // ===== モデルの読み込み =====
+    Model* axisModel = new Model();
+    axisModel->Initialize(dxCommon);
+    axisModel->LoadFromObj("resources", "axis.obj");
+
+    Model* dragonModel = new Model();
+    dragonModel->Initialize(dxCommon);
+    dragonModel->LoadFromObj("resources", "dragon.obj");
+
+    Model* planeModel = new Model();
+    planeModel->Initialize(dxCommon);
+    planeModel->LoadFromObj("resources", "plane.obj");
+
+    Model* multiMaterialModel = new Model();
+    multiMaterialModel->Initialize(dxCommon);
+    multiMaterialModel->LoadFromObj("resources", "multiMaterial.obj");
+
+    // ===== 3Dオブジェクトの作成 =====
+    // 座標軸表示用オブジェクト
+    Object3d* axisObject = new Object3d();
+    axisObject->Initialize(dxCommon, spriteCommon);
+    axisObject->SetModel(axisModel);
+    axisObject->SetPosition({ 0.0f, 0.0f, 0.0f });
+    axisObject->SetScale({ 1.0f, 1.0f, 1.0f });
+
+    // ドラゴンオブジェクト
+    Object3d* dragonObject = new Object3d();
+    dragonObject->Initialize(dxCommon, spriteCommon);
+    dragonObject->SetModel(dragonModel);
+    dragonObject->SetPosition({ 0.0f, 0.0f, 0.0f });
+    dragonObject->SetScale({ 0.1f, 0.1f, 0.1f }); // ドラゴンは大きいので縮小
+    dragonObject->SetRotation({ 0.0f, 0.0f, 0.0f });
+    dragonObject->SetColor({ 1.0f, 1.0f, 1.0f, 1.0f });
+
+    // 平面オブジェクト（床として使用）
+    Object3d* planeObject = new Object3d();
+    planeObject->Initialize(dxCommon, spriteCommon);
+    planeObject->SetModel(planeModel);
+    planeObject->SetPosition({ 0.0f, -1.0f, 0.0f });
+    planeObject->SetScale({ 5.0f, 1.0f, 5.0f }); // 床を広げる
+    planeObject->SetRotation({ 0.0f, 0.0f, 0.0f });
+    planeObject->SetColor({ 0.8f, 0.8f, 0.8f, 1.0f }); // 灰色
+
+    // マルチマテリアルオブジェクト
+    const int kMultiMaterialCount = 3;
+    std::vector<Object3d*> multiMaterialObjects;
+
+    for (int i = 0; i < kMultiMaterialCount; i++) {
+        Object3d* object = new Object3d();
+        object->Initialize(dxCommon, spriteCommon);
+        object->SetModel(multiMaterialModel);
+
+        // 位置をずらして並べる
+        float posX = static_cast<float>(i) * 2.0f - 2.0f;
+        object->SetPosition({ posX, 1.0f, 0.0f });
+        object->SetScale({ 1.0f, 1.0f, 1.0f });
+
+        // 色を変える
+        Vector4 color;
+        if (i == 0) color = { 1.0f, 0.3f, 0.3f, 1.0f }; // 赤っぽい
+        else if (i == 1) color = { 0.3f, 1.0f, 0.3f, 1.0f }; // 緑っぽい
+        else color = { 0.3f, 0.3f, 1.0f, 1.0f }; // 青っぽい
+
+        object->SetColor(color);
+        multiMaterialObjects.push_back(object);
+    }
+
+    // スプライトの作成
+    std::vector<std::string> textureFilePaths = {
+        "Resources/monsterBall.png",
+        "Resources/uvChecker.png",
+        "Resources/kao.png"
+    };
+
+    std::vector<Sprite*> sprites;
+
+    for (uint32_t i = 0; i < textureFilePaths.size(); ++i) {
+        Sprite* sprite = new Sprite();
+        sprite->Initialize(spriteCommon, textureFilePaths[i]);
+        sprites.push_back(sprite);
+    }
+
+    // スプライトの初期設定
+    for (int i = 0; i < sprites.size(); i++) {
+        Vector2 position = { 100.0f + i * 200.0f, 100.0f };
+        Vector2 size = { 100.0f, 100.0f };
+
+        sprites[i]->SetPosition(position);
+        sprites[i]->SetSize(size);
+        sprites[i]->SetAnchorPoint({ 0.5f, 0.5f });
+        sprites[i]->SetTextureLeftTop({ 0.0f, 0.0f });
+        sprites[i]->SetTextureSize({ 256.0f, 256.0f });
+    }
+
+    // カメラ設定
+    Transform cameraTransform = {
+        {1.0f, 1.0f, 1.0f},  // スケール
+        {0.0f, 0.0f, 0.0f},  // 回転
+        {0.0f, 1.0f, -5.0f}  // 位置
+    };
+
+    // ライト設定
+    DirectionalLight light;
+    light.color = { 1.0f, 1.0f, 1.0f, 1.0f };
+    light.direction = { 0.0f, -1.0f, 1.0f };
+    light.intensity = 1.0f;
+
+    // 全オブジェクトにライト設定を適用
+    axisObject->SetDirectionalLight(light);
+    dragonObject->SetDirectionalLight(light);
+    planeObject->SetDirectionalLight(light);
+    for (auto& obj : multiMaterialObjects) {
+        obj->SetDirectionalLight(light);
+    }
+
+    // 表示するモデルの選択
+    bool showAxis = true;
+    bool showDragon = true;
+    bool showPlane = true;
+    bool showMultiMaterial = true;
+
+    // ドラゴンの自動回転
+    bool autoRotateDragon = true;
+    float dragonRotationSpeed = 0.01f;
+
+    // メインループ
+    while (true) {
+        // Windowsのメッセージ処理
+        if (winApp->ProcessMessage()) {
+            // ゲームループを抜ける
+            break;
+        }
+
+        // 入力更新
+        input->Update();
+
+        // スプライト更新
+        for (Sprite* sprite : sprites) {
+            sprite->Update();
+        }
+
+        // ImGui開始
+        ImGui_ImplDX12_NewFrame();
+        ImGui_ImplWin32_NewFrame();
+        ImGui::NewFrame();
+
+        // ImGuiウィンドウ
+        ImGui::Begin("3D Settings");
+
+        // モデル表示設定
+        if (ImGui::CollapsingHeader("Display Settings")) {
+            ImGui::Checkbox("Show Axis", &showAxis);
+            ImGui::Checkbox("Show Dragon", &showDragon);
+            ImGui::Checkbox("Show Plane", &showPlane);
+            ImGui::Checkbox("Show Multi-Material Objects", &showMultiMaterial);
+        }
+
+        // カメラ設定ウィンドウ
+        if (ImGui::CollapsingHeader("Camera")) {
+            ImGui::DragFloat3("Camera Position", &cameraTransform.translate.x, 0.1f);
+            ImGui::DragFloat3("Camera Rotation", &cameraTransform.rotate.x, 0.01f);
+        }
+
+        // ライト設定ウィンドウ
+        if (ImGui::CollapsingHeader("Light")) {
+            ImGui::ColorEdit4("Light Color", &light.color.x);
+            ImGui::DragFloat3("Light Direction", &light.direction.x, 0.01f, -1.0f, 1.0f);
+            ImGui::DragFloat("Light Intensity", &light.intensity, 0.01f, 0.0f, 2.0f);
+
+            if (ImGui::Button("Apply Light Settings")) {
+                // 全オブジェクトにライト設定を適用
+                axisObject->SetDirectionalLight(light);
+                dragonObject->SetDirectionalLight(light);
+                planeObject->SetDirectionalLight(light);
+                for (auto& obj : multiMaterialObjects) {
+                    obj->SetDirectionalLight(light);
+                }
+            }
+        }
+
+        // ドラゴン設定ウィンドウ
+        if (ImGui::CollapsingHeader("Dragon Settings")) {
+            Vector3 position = dragonObject->GetPosition();
+            if (ImGui::DragFloat3("Position", &position.x, 0.1f)) {
+                dragonObject->SetPosition(position);
+            }
+
+            Vector3 rotation = dragonObject->GetRotation();
+            if (ImGui::DragFloat3("Rotation", &rotation.x, 0.01f)) {
+                dragonObject->SetRotation(rotation);
+            }
+
+            Vector3 scale = dragonObject->GetScale();
+            if (ImGui::DragFloat3("Scale", &scale.x, 0.01f, 0.01f, 1.0f)) {
+                dragonObject->SetScale(scale);
+            }
+
+            Vector4 color = dragonObject->GetColor();
+            if (ImGui::ColorEdit4("Color", &color.x)) {
+                dragonObject->SetColor(color);
+            }
+
+            ImGui::Checkbox("Auto Rotate", &autoRotateDragon);
+            if (autoRotateDragon) {
+                ImGui::DragFloat("Rotation Speed", &dragonRotationSpeed, 0.001f, 0.001f, 0.1f);
+            }
+        }
+
+        // マルチマテリアルオブジェクト設定ウィンドウ
+        if (ImGui::CollapsingHeader("Multi-Material Objects")) {
+            for (int i = 0; i < multiMaterialObjects.size(); i++) {
+                std::string label = "Object " + std::to_string(i + 1);
+                if (ImGui::TreeNode(label.c_str())) {
+                    // 位置設定
+                    Vector3 position = multiMaterialObjects[i]->GetPosition();
+                    if (ImGui::DragFloat3("Position", &position.x, 0.1f)) {
+                        multiMaterialObjects[i]->SetPosition(position);
+                    }
+
+                    // 回転設定
+                    Vector3 rotation = multiMaterialObjects[i]->GetRotation();
+                    if (ImGui::DragFloat3("Rotation", &rotation.x, 0.01f)) {
+                        multiMaterialObjects[i]->SetRotation(rotation);
+                    }
+
+                    // スケール設定
+                    Vector3 scale = multiMaterialObjects[i]->GetScale();
+                    if (ImGui::DragFloat3("Scale", &scale.x, 0.01f, 0.1f, 10.0f)) {
+                        multiMaterialObjects[i]->SetScale(scale);
+                    }
+
+                    // 色設定
+                    Vector4 color = multiMaterialObjects[i]->GetColor();
+                    if (ImGui::ColorEdit4("Color", &color.x)) {
+                        multiMaterialObjects[i]->SetColor(color);
+                    }
+
+                    // ライティング有効/無効
+                    bool enableLighting = multiMaterialObjects[i]->GetEnableLighting();
+                    if (ImGui::Checkbox("Enable Lighting", &enableLighting)) {
+                        multiMaterialObjects[i]->SetEnableLighting(enableLighting);
+                    }
+
+                    ImGui::TreePop();
+                }
+            }
+        }
+
+        ImGui::End();
+        ImGui::Render();
+
+        // DirectXの描画準備
+        dxCommon->Begin();
+
+        // スプライトの描画
+        spriteCommon->CommonDraw();
+        for (Sprite* sprite : sprites) {
+            sprite->Draw();
+        }
+
+        // ビュー行列の作成
+        Matrix4x4 viewMatrix = MakeAffineMatrix(
+            cameraTransform.scale,
+            cameraTransform.rotate,
+            cameraTransform.translate);
+        viewMatrix = Inverse(viewMatrix);
+
+        // プロジェクション行列の作成
+        Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(
+            0.45f,
+            static_cast<float>(WinApp::kClientWidth) / static_cast<float>(WinApp::kClientHeight),
+            0.1f,
+            100.0f);
+
+        // 3Dオブジェクトの更新と描画
+
+        // 座標軸の更新と描画
+        if (showAxis) {
+            axisObject->Update(viewMatrix, projectionMatrix);
+            axisObject->Draw();
+        }
+
+        // ドラゴンの更新と描画
+        if (showDragon) {
+            // 自動回転
+            if (autoRotateDragon) {
+                Vector3 rotation = dragonObject->GetRotation();
+                rotation.y += dragonRotationSpeed;
+                dragonObject->SetRotation(rotation);
+            }
+
+            dragonObject->Update(viewMatrix, projectionMatrix);
+            dragonObject->Draw();
+        }
+
+        // 平面（床）の更新と描画
+        if (showPlane) {
+            planeObject->Update(viewMatrix, projectionMatrix);
+            planeObject->Draw();
+        }
+
+        // マルチマテリアルオブジェクトの更新と描画
+        if (showMultiMaterial) {
+            for (Object3d* object : multiMaterialObjects) {
+                // オブジェクトを少しずつ回転させる
+                Vector3 rotation = object->GetRotation();
+                rotation.y += 0.01f;
+                object->SetRotation(rotation);
+
+                // 行列の更新と描画
+                object->Update(viewMatrix, projectionMatrix);
+                object->Draw();
+            }
+        }
+
+        // ImGuiの描画
+        ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), dxCommon->GetCommandList());
+
+        // 描画終了
+        dxCommon->End();
+    }
+
+    // ImGuiの解放
+    ImGui_ImplDX12_Shutdown();
+    ImGui_ImplWin32_Shutdown();
+    ImGui::DestroyContext();
+
+    // 3Dオブジェクトの解放
+    delete axisObject;
+    delete dragonObject;
+    delete planeObject;
+    for (Object3d* object : multiMaterialObjects) {
+        delete object;
+    }
+
+    // モデルの解放
+    delete axisModel;
+    delete dragonModel;
+    delete planeModel;
+    delete multiMaterialModel;
+
+    // スプライトの解放
+    for (Sprite* sprite : sprites) {
+        delete sprite;
+    }
+
+    // 終了処理
+    TextureManager::GetInstance()->Finalize();
+    delete winApp;
+    delete dxCommon;
+    delete input;
+    delete spriteCommon;
+
+    return 0;
 }

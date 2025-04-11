@@ -1,0 +1,89 @@
+#include "Object3d.h"
+#include "DirectXCommon.h"
+#include "SpriteCommon.h"
+#include "Math.h"
+#include "TextureManager.h"
+
+Object3d::Object3d() : model_(nullptr), dxCommon_(nullptr), spriteCommon_(nullptr),
+materialData_(nullptr), transformationMatrixData_(nullptr), directionalLightData_(nullptr) {
+    // 初期値設定
+    transform_.scale = { 1.0f, 1.0f, 1.0f };
+    transform_.rotate = { 0.0f, 0.0f, 0.0f };
+    transform_.translate = { 0.0f, 0.0f, 0.0f };
+}
+
+Object3d::~Object3d() {}
+
+void Object3d::Initialize(DirectXCommon* dxCommon, SpriteCommon* spriteCommon) {
+    assert(dxCommon);
+    assert(spriteCommon);
+    dxCommon_ = dxCommon;
+    spriteCommon_ = spriteCommon;
+
+    // マテリアルリソースの作成
+    materialResource_ = dxCommon_->CreateBufferResource(sizeof(Material));
+    // マテリアルデータの書き込み
+    materialResource_->Map(0, nullptr, reinterpret_cast<void**>(&materialData_));
+    materialData_->color = { 1.0f, 1.0f, 1.0f, 1.0f };
+    materialData_->enableLighting = true;
+    materialData_->uvTransform = MakeIdentity4x4();
+
+    // 変換行列リソースの作成
+    transformationMatrixResource_ = dxCommon_->CreateBufferResource(sizeof(TransformationMatrix));
+    // 変換行列データの書き込み
+    transformationMatrixResource_->Map(0, nullptr, reinterpret_cast<void**>(&transformationMatrixData_));
+    transformationMatrixData_->WVP = MakeIdentity4x4();
+    transformationMatrixData_->World = MakeIdentity4x4();
+
+    // ライトリソースの作成
+    directionalLightResource_ = dxCommon_->CreateBufferResource(sizeof(DirectionalLight));
+    // ライトデータの書き込み
+    directionalLightResource_->Map(0, nullptr, reinterpret_cast<void**>(&directionalLightData_));
+    directionalLightData_->color = { 1.0f, 1.0f, 1.0f, 1.0f };
+    directionalLightData_->direction = { 0.0f, -1.0f, 0.0f };
+    directionalLightData_->intensity = 1.0f;
+}
+
+void Object3d::SetModel(Model* model) {
+    model_ = model;
+}
+
+void Object3d::Update(const Matrix4x4& viewMatrix, const Matrix4x4& projectionMatrix) {
+    assert(transformationMatrixData_);
+
+    // ワールド行列の計算
+    Matrix4x4 worldMatrix = MakeAffineMatrix(transform_.scale, transform_.rotate, transform_.translate);
+
+    // WVP行列の計算
+    Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+
+    // 行列の更新
+    transformationMatrixData_->WVP = worldViewProjectionMatrix;
+    transformationMatrixData_->World = worldMatrix;
+}
+
+void Object3d::Draw() {
+    assert(dxCommon_);
+    assert(model_);
+
+    // 共通描画設定
+    spriteCommon_->CommonDraw();
+
+    // モデルの頂点バッファをセット
+    dxCommon_->GetCommandList()->IASetVertexBuffers(0, 1, &model_->GetVBView());
+
+    // マテリアルCBufferの場所を設定
+    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResource_->GetGPUVirtualAddress());
+
+    // 変換行列CBufferの場所を設定
+    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, transformationMatrixResource_->GetGPUVirtualAddress());
+
+    // テクスチャの場所を設定
+    dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, TextureManager::GetInstance()->GetSrvHandleGPU(model_->GetTextureIndex()));
+
+    // ライトCBufferの場所を設定
+    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(3, directionalLightResource_->GetGPUVirtualAddress());
+
+    // 描画
+    dxCommon_->GetCommandList()->DrawInstanced(model_->GetVertexCount(), 1, 0, 0);
+}
