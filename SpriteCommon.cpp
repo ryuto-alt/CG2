@@ -101,7 +101,7 @@ void SpriteCommon::GraphicsPipelineInitialize()
 	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 	//RasiterzerStateの設定
 	D3D12_RASTERIZER_DESC rasterizerDesc{};
-	//裏面（時計回り）を表示しない
+	//カリングをオフにする（全ての面を描画する）
 	rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
 	//三角形の中を塗りつぶす
 	rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
@@ -114,11 +114,11 @@ void SpriteCommon::GraphicsPipelineInitialize()
 	assert(pixelShaderBlob != nullptr);
 	//DepthStencilStateの設定
 	D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
-	//Deothの機能を有効化する
+	//深度テストを有効化
 	depthStencilDesc.DepthEnable = true;
-	//書き込みします
+	//深度値を書き込む
 	depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-	//比較関数はLessEqual
+	//比較関数はLessEqual（手前にあるものを優先的に描画）
 	depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 	//PSOを生成する
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDesc{};

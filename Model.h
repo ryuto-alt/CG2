@@ -33,6 +33,9 @@ public:
     ID3D12Resource* GetVertexResource() const { return vertexResource_.Get(); }
 
 private:
+    // モデルデータの最適化（UV球など改善のため）
+    void OptimizeTriangles(ModelData& modelData, const std::string& filename);
+
     // モデルデータの読み込み
     ModelData LoadObjFile(const std::string& directoryPath, const std::string& filename);
     // マテリアルデータの読み込み

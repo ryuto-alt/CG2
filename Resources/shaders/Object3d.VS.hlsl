@@ -15,16 +15,15 @@ struct VertexShaderInput
     float32_t3 normal : NORMAL0;
 };
 
-
-
 VertexShaderOutput main(VertexShaderInput input)
 {
     VertexShaderOutput output;
     output.position = mul(input.position, gTransformationMatrix.WVP);
     output.texcoord = input.texcoord;
-    output.normal = normalize(mul(input.normal, (float32_t3x3) gTransformationMatrix.World));
+    
+    // 法線の計算を精密に行い、正規化を確実に行う
+    float32_t3 worldNormal = mul(input.normal, (float32_t3x3) gTransformationMatrix.World);
+    output.normal = normalize(worldNormal);
     
     return output;
 }
-
-
