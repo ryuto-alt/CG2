@@ -125,20 +125,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         multiMaterialObjects.push_back(object);
     }
 
-    // スプライトの作成
-    std::vector<std::string> textureFilePaths = {
-        "Resources/monsterBall.png",
-        "Resources/uvChecker.png",
-        "Resources/kao.png"
-    };
+    //// スプライトの作成
+    //std::vector<std::string> textureFilePaths = {
+    //    "Resources/monsterBall.png",
+    //    "Resources/uvChecker.png",
+    //    "Resources/kao.png"
+    //};
 
     std::vector<Sprite*> sprites;
 
-    for (uint32_t i = 0; i < textureFilePaths.size(); ++i) {
+   /* for (uint32_t i = 0; i < textureFilePaths.size(); ++i) {
         Sprite* sprite = new Sprite();
         sprite->Initialize(spriteCommon, textureFilePaths[i]);
         sprites.push_back(sprite);
-    }
+    }*/
 
     // スプライトの初期設定
     for (int i = 0; i < sprites.size(); i++) {
