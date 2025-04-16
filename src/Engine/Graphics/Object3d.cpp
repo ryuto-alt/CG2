@@ -4,8 +4,10 @@
 #include "Math.h"
 #include "TextureManager.h"
 
+
 Object3d::Object3d() : model_(nullptr), dxCommon_(nullptr), spriteCommon_(nullptr),
-materialData_(nullptr), transformationMatrixData_(nullptr), directionalLightData_(nullptr) {
+materialData_(nullptr), transformationMatrixData_(nullptr), directionalLightData_(nullptr),
+camera_(nullptr) {
     // 初期値設定
     transform_.scale = { 1.0f, 1.0f, 1.0f };
     transform_.rotate = { 0.0f, 0.0f, 0.0f };
@@ -48,6 +50,7 @@ void Object3d::SetModel(Model* model) {
     model_ = model;
 }
 
+// 従来のUpdateメソッド（ビュー行列とプロジェクション行列を直接指定）
 void Object3d::Update(const Matrix4x4& viewMatrix, const Matrix4x4& projectionMatrix) {
     assert(transformationMatrixData_);
 
@@ -56,6 +59,40 @@ void Object3d::Update(const Matrix4x4& viewMatrix, const Matrix4x4& projectionMa
 
     // WVP行列の計算
     Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+
+    // 行列の更新
+    transformationMatrixData_->WVP = worldViewProjectionMatrix;
+    transformationMatrixData_->World = worldMatrix;
+}
+
+// カメラセッター
+void Object3d::SetCamera(Camera* camera) {
+    camera_ = camera;
+}
+
+// カメラゲッター
+Camera* Object3d::GetCamera() const {
+    return camera_;
+}
+
+// 新しいUpdateメソッド（カメラを使用）
+void Object3d::Update() {
+    assert(transformationMatrixData_);
+
+    // カメラが設定されていない場合はデフォルトカメラを使用
+    Camera* useCamera = camera_;
+    if (!useCamera) {
+        useCamera = Object3dCommon::GetDefaultCamera();
+    }
+
+    // カメラが有効かチェック
+    assert(useCamera);
+
+    // ワールド行列の計算
+    Matrix4x4 worldMatrix = MakeAffineMatrix(transform_.scale, transform_.rotate, transform_.translate);
+
+    // WVP行列の計算（カメラからビュープロジェクション行列を取得）
+    Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, useCamera->GetViewProjectionMatrix());
 
     // 行列の更新
     transformationMatrixData_->WVP = worldViewProjectionMatrix;
