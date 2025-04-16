@@ -8,8 +8,7 @@
 #include <d3d12.h>
 #include <wrl.h>
 #include "DirectXCommon.h"
-#include "math.h"
-#include "../Math/Mymath.h"
+#include "Mymath.h"
 
 // モデルデータクラス
 class Model {

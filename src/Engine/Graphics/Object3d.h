@@ -6,7 +6,6 @@
 #include <wrl.h>
 #include <memory>
 #include "math.h"
-#include "../Math/Mymath.h"
 
 class DirectXCommon;
 class SpriteCommon;

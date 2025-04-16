@@ -1,5 +1,4 @@
-#include "Mymath.h"
-#include <Vector3.h>
+#include "MyMath.h"
 
 //float Cot(float theta)
 //{

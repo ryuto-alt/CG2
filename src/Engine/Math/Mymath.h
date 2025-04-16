@@ -9,7 +9,6 @@
 #include <stdio.h>
 #include <vector>
 #include <string>
-#include <Vector4.h>
 
 //float Cot(float theta);
 

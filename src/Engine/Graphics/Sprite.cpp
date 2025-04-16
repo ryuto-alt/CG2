@@ -1,9 +1,8 @@
 #include "Sprite.h"
 #include "SpriteCommon.h"
-#include "Math.h"
+#include "MyMath.h"
 #include "RenderingPipeline.h"
 #include "TextureManager.h"
-#include "../Math/Mymath.h"
 
 void Sprite::Initialize(SpriteCommon* spriteCommon, std::string textureFilePath)
 {

@@ -60,47 +60,47 @@
     <ClCompile Include="externals\imgui\imgui_widgets.cpp">
       <Filter>math\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="D3DResourceCheck.cpp">
+    <ClCompile Include="src\Engine\Graphics\D3DResourceCheck.cpp">
       <Filter>src\engine\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="DirectXCommon.cpp">
+    <ClCompile Include="src\Engine\Graphics\DirectXCommon.cpp">
       <Filter>src\engine\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Model.cpp">
+    <ClCompile Include="src\Engine\Graphics\Model.cpp">
       <Filter>src\engine\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Object3d.cpp">
+    <ClCompile Include="src\Engine\Graphics\Object3d.cpp">
       <Filter>src\engine\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="RenderingPipeline.cpp">
+    <ClCompile Include="src\Engine\Graphics\RenderingPipeline.cpp">
       <Filter>src\engine\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Sprite.cpp">
+    <ClCompile Include="src\Engine\Graphics\Sprite.cpp">
       <Filter>src\engine\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="SpriteCommon.cpp">
+    <ClCompile Include="src\Engine\Graphics\SpriteCommon.cpp">
       <Filter>src\engine\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="TextureManager.cpp">
+    <ClCompile Include="src\Engine\Graphics\TextureManager.cpp">
       <Filter>src\engine\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Input.cpp">
+    <ClCompile Include="src\Engine\Input\Input.cpp">
       <Filter>src\engine\Input</Filter>
     </ClCompile>
-    <ClCompile Include="Logger.cpp">
-      <Filter>src\engine\Utility</Filter>
-    </ClCompile>
-    <ClCompile Include="StringUtility.cpp">
-      <Filter>src\engine\Utility</Filter>
-    </ClCompile>
-    <ClCompile Include="WinApp.cpp">
-      <Filter>src\engine\Utility</Filter>
-    </ClCompile>
-    <ClCompile Include="main.cpp">
-      <Filter>src\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="math.cpp">
+    <ClCompile Include="src\Engine\Math\Mymath.cpp">
       <Filter>src\engine\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Utility\Logger.cpp">
+      <Filter>src\engine\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Utility\StringUtility.cpp">
+      <Filter>src\engine\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Utility\WinApp.cpp">
+      <Filter>src\engine\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Game\main.cpp">
+      <Filter>src\Game</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -128,73 +128,61 @@
     <ClInclude Include="externals\imgui\imstb_truetype.h">
       <Filter>math\imgui</Filter>
     </ClInclude>
-    <ClInclude Include="D3DResourceCheck.h">
+    <ClInclude Include="src\Engine\Graphics\D3DResourceCheck.h">
       <Filter>src\engine\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="DirectXCommon.h">
+    <ClInclude Include="src\Engine\Graphics\DirectXCommon.h">
       <Filter>src\engine\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="Model.h">
+    <ClInclude Include="src\Engine\Graphics\Model.h">
       <Filter>src\engine\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="Object3d.h">
+    <ClInclude Include="src\Engine\Graphics\Object3d.h">
       <Filter>src\engine\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="RenderingPipeline.h">
+    <ClInclude Include="src\Engine\Graphics\RenderingPipeline.h">
       <Filter>src\engine\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="ResourceObject.h">
+    <ClInclude Include="src\Engine\Graphics\ResourceObject.h">
       <Filter>src\engine\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="Sprite.h">
+    <ClInclude Include="src\Engine\Graphics\Sprite.h">
       <Filter>src\engine\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="SpriteCommon.h">
+    <ClInclude Include="src\Engine\Graphics\SpriteCommon.h">
       <Filter>src\engine\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="TextureManager.h">
+    <ClInclude Include="src\Engine\Graphics\TextureManager.h">
       <Filter>src\engine\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="Input.h">
+    <ClInclude Include="src\Engine\Input\Input.h">
       <Filter>src\engine\Input</Filter>
     </ClInclude>
-    <ClInclude Include="math.h">
+    <ClInclude Include="src\Engine\Math\Matrix3x3.h">
       <Filter>src\engine\Math</Filter>
     </ClInclude>
-    <ClInclude Include="Matrix3x3.h">
+    <ClInclude Include="src\Engine\Math\Matrix4x4.h">
       <Filter>src\engine\Math</Filter>
     </ClInclude>
-    <ClInclude Include="math\Matrix4x4.h">
+    <ClInclude Include="src\Engine\Math\Mymath.h">
       <Filter>src\engine\Math</Filter>
     </ClInclude>
-    <ClInclude Include="Matrix4x4.h">
+    <ClInclude Include="src\Engine\Math\Vector2.h">
       <Filter>src\engine\Math</Filter>
     </ClInclude>
-    <ClInclude Include="math\Vector2.h">
+    <ClInclude Include="src\Engine\Math\Vector3.h">
       <Filter>src\engine\Math</Filter>
     </ClInclude>
-    <ClInclude Include="Vector2.h">
+    <ClInclude Include="src\Engine\Math\Vector4.h">
       <Filter>src\engine\Math</Filter>
     </ClInclude>
-    <ClInclude Include="math\Vector3.h">
-      <Filter>src\engine\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Vector3.h">
-      <Filter>src\engine\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Vector4.h">
-      <Filter>src\engine\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="math\Vector4.h">
-      <Filter>src\engine\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Logger.h">
+    <ClInclude Include="src\Engine\Utility\Logger.h">
       <Filter>src\engine\Utility</Filter>
     </ClInclude>
-    <ClInclude Include="StringUtility.h">
+    <ClInclude Include="src\Engine\Utility\StringUtility.h">
       <Filter>src\engine\Utility</Filter>
     </ClInclude>
-    <ClInclude Include="WinApp.h">
+    <ClInclude Include="src\Engine\Utility\WinApp.h">
       <Filter>src\engine\Utility</Filter>
     </ClInclude>
   </ItemGroup>

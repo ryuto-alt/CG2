@@ -2,14 +2,16 @@
 #include <format>
 #include <windows.h>
 #pragma comment(lib,"dxguid.lib")
+#include "Vector2.h"
+#include "Vector3.h"
+#include "Vector4.h"
+#include "Matrix4x4.h"
+#include "RenderingPipeline.h"
 
 #include <numbers>
 #include <algorithm>
 #include <fstream>
 #include <sstream>
-
-// エンジン関連のインクルード
-#include "../Engine/Math/Mymath.h"
 #include "Input.h"
 #include "WinApp.h"
 #include "DirectXCommon.h"
@@ -18,7 +20,7 @@
 #include "SpriteCommon.h"
 #include "Sprite.h"
 #include "TextureManager.h"
-#include "RenderingPipeline.h"
+#include "math.h"
 
 // 新しく追加したクラス
 #include "Model.h"
@@ -215,32 +217,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
         // カメラ設定ウィンドウ
         if (ImGui::CollapsingHeader("Camera")) {
-            float position[3] = {cameraTransform.translate.x, cameraTransform.translate.y, cameraTransform.translate.z};
-            if (ImGui::DragFloat3("Camera Position", position, 0.1f)) {
-                cameraTransform.translate = {position[0], position[1], position[2]};
-            }
-
-            float rotation[3] = {cameraTransform.rotate.x, cameraTransform.rotate.y, cameraTransform.rotate.z};
-            if (ImGui::DragFloat3("Camera Rotation", rotation, 0.01f)) {
-                cameraTransform.rotate = {rotation[0], rotation[1], rotation[2]};
-            }
+            ImGui::DragFloat3("Camera Position", &cameraTransform.translate.x, 0.1f);
+            ImGui::DragFloat3("Camera Rotation", &cameraTransform.rotate.x, 0.01f);
         }
 
         // ライト設定ウィンドウ
         if (ImGui::CollapsingHeader("Light")) {
-            float color[4] = {light.color.x, light.color.y, light.color.z, light.color.w};
-            if (ImGui::ColorEdit4("Light Color", color)) {
-                light.color = {color[0], color[1], color[2], color[3]};
-            }
-
-            float direction[3] = {light.direction.x, light.direction.y, light.direction.z};
-            if (ImGui::DragFloat3("Light Direction", direction, 0.01f, -1.0f, 1.0f)) {
-                light.direction = {direction[0], direction[1], direction[2]};
-            }
-
-            if (ImGui::DragFloat("Light Intensity", &light.intensity, 0.01f, 0.0f, 2.0f)) {
-                // 変更された場合の処理
-            }
+            ImGui::ColorEdit4("Light Color", &light.color.x);
+            ImGui::DragFloat3("Light Direction", &light.direction.x, 0.01f, -1.0f, 1.0f);
+            ImGui::DragFloat("Light Intensity", &light.intensity, 0.01f, 0.0f, 2.0f);
 
             if (ImGui::Button("Apply Light Settings")) {
                 // 全オブジェクトにライト設定を適用
@@ -256,30 +241,22 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         // ドラゴン設定ウィンドウ
         if (ImGui::CollapsingHeader("Dragon Settings")) {
             Vector3 position = dragonObject->GetPosition();
-            float pos[3] = {position.x, position.y, position.z};
-            if (ImGui::DragFloat3("Position", pos, 0.1f)) {
-                position = {pos[0], pos[1], pos[2]};
+            if (ImGui::DragFloat3("Position", &position.x, 0.1f)) {
                 dragonObject->SetPosition(position);
             }
 
             Vector3 rotation = dragonObject->GetRotation();
-            float rot[3] = {rotation.x, rotation.y, rotation.z};
-            if (ImGui::DragFloat3("Rotation", rot, 0.01f)) {
-                rotation = {rot[0], rot[1], rot[2]};
+            if (ImGui::DragFloat3("Rotation", &rotation.x, 0.01f)) {
                 dragonObject->SetRotation(rotation);
             }
 
             Vector3 scale = dragonObject->GetScale();
-            float scl[3] = {scale.x, scale.y, scale.z};
-            if (ImGui::DragFloat3("Scale", scl, 0.01f, 0.01f, 1.0f)) {
-                scale = {scl[0], scl[1], scl[2]};
+            if (ImGui::DragFloat3("Scale", &scale.x, 0.01f, 0.01f, 1.0f)) {
                 dragonObject->SetScale(scale);
             }
 
             Vector4 color = dragonObject->GetColor();
-            float col[4] = {color.x, color.y, color.z, color.w};
-            if (ImGui::ColorEdit4("Color", col)) {
-                color = {col[0], col[1], col[2], col[3]};
+            if (ImGui::ColorEdit4("Color", &color.x)) {
                 dragonObject->SetColor(color);
             }
 
@@ -296,40 +273,32 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
                 if (ImGui::TreeNode(label.c_str())) {
                     // 位置設定
                     Vector3 position = multiMaterialObjects[i]->GetPosition();
-                    float pos[3] = {position.x, position.y, position.z};
-                    if (ImGui::DragFloat3("Position", pos, 0.1f)) {
-                        position = {pos[0], pos[1], pos[2]};
+                    if (ImGui::DragFloat3("Position", &position.x, 0.1f)) {
                         multiMaterialObjects[i]->SetPosition(position);
                     }
 
                     // 回転設定
                     Vector3 rotation = multiMaterialObjects[i]->GetRotation();
-                    float rot[3] = {rotation.x, rotation.y, rotation.z};
-                    if (ImGui::DragFloat3("Rotation", rot, 0.01f)) {
-                        rotation = {rot[0], rot[1], rot[2]};
+                    if (ImGui::DragFloat3("Rotation", &rotation.x, 0.01f)) {
                         multiMaterialObjects[i]->SetRotation(rotation);
                     }
 
                     // スケール設定
                     Vector3 scale = multiMaterialObjects[i]->GetScale();
-                    float scl[3] = {scale.x, scale.y, scale.z};
-                    if (ImGui::DragFloat3("Scale", scl, 0.01f, 0.1f, 10.0f)) {
-                        scale = {scl[0], scl[1], scl[2]};
+                    if (ImGui::DragFloat3("Scale", &scale.x, 0.01f, 0.1f, 10.0f)) {
                         multiMaterialObjects[i]->SetScale(scale);
                     }
 
                     // 色設定
                     Vector4 color = multiMaterialObjects[i]->GetColor();
-                    float col[4] = {color.x, color.y, color.z, color.w};
-                    if (ImGui::ColorEdit4("Color", col)) {
-                        color = {col[0], col[1], col[2], col[3]};
+                    if (ImGui::ColorEdit4("Color", &color.x)) {
                         multiMaterialObjects[i]->SetColor(color);
                     }
 
                     // ライティング有効/無効
                     bool enableLighting = multiMaterialObjects[i]->GetEnableLighting();
                     if (ImGui::Checkbox("Enable Lighting", &enableLighting)) {
-                    multiMaterialObjects[i]->SetEnableLighting(enableLighting);
+                        multiMaterialObjects[i]->SetEnableLighting(enableLighting);
                     }
 
                     ImGui::TreePop();
