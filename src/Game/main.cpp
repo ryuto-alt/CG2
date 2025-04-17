@@ -22,11 +22,10 @@
 #include "TextureManager.h"
 #include "math.h"
 
-// 追加のインクルード
 #include "Model.h"
 #include "Object3d.h"
 #include "Camera.h"
-#include "SrvManager.h"  // 追加
+#include "SrvManager.h"  
 
 // ImGuiの初期化関数
 void InitializeImGui(WinApp* winApp, DirectXCommon* dxCommon, SrvManager* srvManager) {
@@ -367,13 +366,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
             // カーソル表示中はマウス操作を無効化
             if (showMouseCursor) {
-                // カーソル表示時は通常のウィンドウモードに
-                // 必要に応じてここでカメラ操作の一時停止処理を追加
             }
             else {
-                // カーソル非表示時はゲームモードに戻す
-                // 必要に応じてここでカメラ操作の再開処理を追加
-
                 // マウスを中央に戻す
                 POINT center;
                 center.x = WinApp::kClientWidth / 2;
@@ -383,7 +377,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
             }
         }
 
-        // ドラゴンの自動回転
+        // 自動回転
         if (autoRotateDragon && showDragon) {
             Vector3 rotation = dragonObject->GetRotation();
             rotation.y += dragonRotationSpeed;
@@ -452,7 +446,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     delete dxCommon;
     delete input;
     delete spriteCommon;
-    delete srvManager;  // 追加
+    delete srvManager; 
 
     return 0;
 }
