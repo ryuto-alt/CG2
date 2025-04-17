@@ -40,6 +40,9 @@
     <Filter Include="src\engine\Camera">
       <UniqueIdentifier>{a5e44d82-b77d-4606-93f2-6350a7346ab2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\engine\Particle">
+      <UniqueIdentifier>{4a4d7a49-a2df-41bd-9337-ad326d029107}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="externals\imgui\imgui.cpp">
@@ -110,6 +113,12 @@
     </ClCompile>
     <ClCompile Include="src\Engine\Graphics\SRVManager.cpp">
       <Filter>src\engine\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Particle\ParticleManager.cpp">
+      <Filter>src\engine\Particle</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Particle\ParticleEmitter.cpp">
+      <Filter>src\engine\Particle</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -200,6 +209,12 @@
     <ClInclude Include="src\Engine\Graphics\SRVManager.h">
       <Filter>src\engine\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="src\Engine\Particle\ParticleManager.h">
+      <Filter>src\engine\Particle</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Particle\ParticleEmitter.h">
+      <Filter>src\engine\Particle</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt">
@@ -210,12 +225,21 @@
     <None Include="Resources\shaders\Object3d.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
+    <None Include="Resources\shaders\Particle.hlsli">
+      <Filter>リソース ファイル</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Resources\shaders\Object3d.PS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
     <FxCompile Include="Resources\shaders\Object3d.VS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Resources\shaders\Particle.VS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Resources\shaders\Particle.PS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
   </ItemGroup>

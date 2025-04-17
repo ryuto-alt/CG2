@@ -18,14 +18,14 @@
 #include "D3DResourceCheck.h"
 #include "Logger.h"
 #include "SpriteCommon.h"
-#include "Sprite.h"
 #include "TextureManager.h"
 #include "math.h"
-
-#include "Model.h"
-#include "Object3d.h"
 #include "Camera.h"
 #include "SrvManager.h"  
+
+// パーティクルシステム関連のヘッダー
+#include "ParticleManager.h"
+#include "ParticleEmitter.h"
 
 // ImGuiの初期化関数
 void InitializeImGui(WinApp* winApp, DirectXCommon* dxCommon, SrvManager* srvManager) {
@@ -58,7 +58,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     DirectXCommon* dxCommon = nullptr;
     Input* input = nullptr;
     SpriteCommon* spriteCommon = nullptr;
-    SrvManager* srvManager = nullptr;  // 追加
+    SrvManager* srvManager = nullptr;
 
     // WindowsAPI初期化
     winApp = new WinApp;
@@ -68,14 +68,22 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     dxCommon = new DirectXCommon();
     dxCommon->Initialize(winApp);
 
-    // SRVマネージャの初期化 - 追加
+    // SRVマネージャの初期化
     srvManager = new SrvManager();
     srvManager->Initialize(dxCommon);
 
     // テクスチャマネージャの初期化
-    TextureManager::GetInstance()->Initialize(dxCommon, srvManager);  // 引数追加
+    TextureManager::GetInstance()->Initialize(dxCommon, srvManager);
 
-    // ImGuiの初期化を追加
+    // パーティクルマネージャの初期化
+    ParticleManager::GetInstance()->Initialize(dxCommon, srvManager);
+
+    // パーティクルグループの作成
+    ParticleManager::GetInstance()->CreateParticleGroup("smoke", "resources/particle/smoke.png");
+    ParticleManager::GetInstance()->CreateParticleGroup("fire", "resources/particle/fire.png");
+    ParticleManager::GetInstance()->CreateParticleGroup("star", "resources/particle/star.png");
+
+    // ImGuiの初期化
     InitializeImGui(winApp, dxCommon, srvManager);
 
     // 入力初期化
@@ -86,83 +94,78 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     spriteCommon = new SpriteCommon();
     spriteCommon->Initialize(dxCommon);
 
-    // ===== カメラの作成と初期化 =====
-    Camera* mainCamera = new Camera();
-    mainCamera->SetTranslate({ 0.0f, 1.0f, -5.0f });
+    // カメラの作成と初期化
+    Camera* camera = new Camera();
+    camera->SetTranslate({ 0.0f, 0.0f, -5.0f });
+    Object3dCommon::SetDefaultCamera(camera);
 
-    // 2つ目のカメラ（切り替え用）
-    Camera* secondCamera = new Camera();
-    secondCamera->SetTranslate({ 5.0f, 2.0f, -3.0f });
-    secondCamera->SetRotate({ 0.0f, -0.5f, 0.0f });
+    // カメラの視点から少し前方にパーティクルエミッタを配置
+    Vector3 cameraPos = camera->GetTranslate();
+    Vector3 cameraFront = { 0.0f, 0.0f, 1.0f }; // カメラは-Z方向を向いている
 
-    // 現在使用中のカメラ
-    Camera* currentCamera = mainCamera;
+    // パーティクルエミッタの作成 - カメラのすぐ前に配置（非常に大きなサイズで）
+    ParticleEmitter* smokeEmitter = new ParticleEmitter(
+        "smoke",
+        { cameraPos.x, cameraPos.y, cameraPos.z + 1.0f }, // カメラの1.0m前
+        100,                  // 一度に発生する数を増やす
+        10.0f,               // 発生頻度（秒間）
+        { -0.5f, 0.5f, -0.5f },  // 最小速度
+        { 0.5f, 1.0f, 0.5f },    // 最大速度
+        { 0.0f, 0.0f, 0.0f },    // 最小加速度
+        { 0.0f, 0.5f, 0.0f },    // 最大加速度
+        5.0f,                    // 最小開始サイズを非常に大きく
+        10.0f,                   // 最大開始サイズを非常に大きく
+        7.0f,                    // 最小終了サイズを非常に大きく
+        15.0f,                   // 最大終了サイズを非常に大きく
+        { 1.0f, 1.0f, 1.0f, 1.0f },  // 最小開始色（白）
+        { 1.0f, 1.0f, 1.0f, 1.0f },  // 最大開始色（白）
+        { 1.0f, 1.0f, 1.0f, 0.0f },  // 最小終了色（透明）
+        { 1.0f, 1.0f, 1.0f, 0.0f }   // 最大終了色（透明）
+    );
 
-    // デフォルトカメラとして設定
-    Object3dCommon::SetDefaultCamera(currentCamera);
+    ParticleEmitter* fireEmitter = new ParticleEmitter(
+        "fire",
+        { cameraPos.x + 1.0f, cameraPos.y, cameraPos.z + 1.0f }, // カメラの1.0m前、右に1m
+        100,                  // 一度に発生する数を増やす
+        20.0f,               // 発生頻度（秒間）
+        { -0.2f, 0.5f, -0.2f },  // 最小速度
+        { 0.2f, 1.0f, 0.2f },    // 最大速度
+        { 0.0f, 0.0f, 0.0f },    // 最小加速度
+        { 0.0f, 0.0f, 0.0f },    // 最大加速度
+        5.0f,                    // 最小開始サイズを非常に大きく
+        8.0f,                    // 最大開始サイズを非常に大きく
+        2.0f,                    // 最小終了サイズ
+        4.0f,                    // 最大終了サイズ
+        { 1.0f, 0.2f, 0.0f, 1.0f },  // 最小開始色（赤橙色）を鮮やかに
+        { 1.0f, 0.5f, 0.0f, 1.0f },  // 最大開始色（橙色）を鮮やかに
+        { 1.0f, 0.0f, 0.0f, 0.0f },  // 最小終了色（赤、透明）
+        { 1.0f, 0.2f, 0.0f, 0.0f }   // 最大終了色（赤橙、透明）
+    );
 
-    // ===== モデルの読み込み =====
-    Model* axisModel = new Model();
-    axisModel->Initialize(dxCommon);
-    axisModel->LoadFromObj("resources", "axis.obj");
-
-    Model* dragonModel = new Model();
-    dragonModel->Initialize(dxCommon);
-    dragonModel->LoadFromObj("resources", "sphere.obj");
-
-    Model* planeModel = new Model();
-    planeModel->Initialize(dxCommon);
-    planeModel->LoadFromObj("resources", "plane.obj");
-
-    // ===== 3Dオブジェクトの作成 =====
-    // 座標軸表示用オブジェクト
-    Object3d* axisObject = new Object3d();
-    axisObject->Initialize(dxCommon, spriteCommon);
-    axisObject->SetModel(axisModel);
-    axisObject->SetPosition({ 0.0f, 0.0f, 0.0f });
-    axisObject->SetScale({ 1.0f, 1.0f, 1.0f });
-    // カメラを個別に設定する例
-    axisObject->SetCamera(mainCamera);
-
-    // ドラゴンオブジェクト
-    Object3d* dragonObject = new Object3d();
-    dragonObject->Initialize(dxCommon, spriteCommon);
-    dragonObject->SetModel(dragonModel);
-    dragonObject->SetPosition({ 0.0f, 0.0f, 0.0f });
-    dragonObject->SetScale({ 0.1f, 0.1f, 0.1f }); // ドラゴンは大きいので縮小
-    dragonObject->SetRotation({ 0.0f, 0.0f, 0.0f });
-    dragonObject->SetColor({ 1.0f, 1.0f, 1.0f, 1.0f });
-    // デフォルトカメラを使用する例（明示的に設定しない）
-
-    // 平面オブジェクト（床として使用）
-    Object3d* planeObject = new Object3d();
-    planeObject->Initialize(dxCommon, spriteCommon);
-    planeObject->SetModel(planeModel);
-    planeObject->SetPosition({ 0.0f, -1.0f, 0.0f });
-    planeObject->SetScale({ 5.0f, 1.0f, 5.0f }); // 床を広げる
-    planeObject->SetRotation({ 0.0f, 0.0f, 0.0f });
-    planeObject->SetColor({ 0.8f, 0.8f, 0.8f, 1.0f }); // 灰色
-    // デフォルトカメラを使用する例（明示的に設定しない）
-
-    // ライト設定
-    DirectionalLight light;
-    light.color = { 1.0f, 1.0f, 1.0f, 1.0f };
-    light.direction = { 0.0f, -1.0f, 1.0f };
-    light.intensity = 1.0f;
-
-    // 全オブジェクトにライト設定を適用
-    axisObject->SetDirectionalLight(light);
-    dragonObject->SetDirectionalLight(light);
-    planeObject->SetDirectionalLight(light);
-
-    // 表示するモデルの選択
-    bool showAxis = true;
-    bool showDragon = true;
-    bool showPlane = true;
-
-    // ドラゴンの自動回転
-    bool autoRotateDragon = true;
-    float dragonRotationSpeed = 0.01f;
+    ParticleEmitter* starEmitter = new ParticleEmitter(
+        "star",
+        { cameraPos.x - 1.0f, cameraPos.y, cameraPos.z + 1.0f }, // カメラの1.0m前、左に1m
+        100,                  // 一度に発生する数を増やす
+        5.0f,                // 発生頻度（秒間）
+        { -1.0f, -1.0f, -1.0f }, // 最小速度
+        { 1.0f, 1.0f, 1.0f },    // 最大速度
+        { 0.0f, -0.5f, 0.0f },   // 最小加速度
+        { 0.0f, -0.3f, 0.0f },   // 最大加速度
+        4.0f,                    // 最小開始サイズを非常に大きく
+        6.0f,                    // 最大開始サイズを非常に大きく
+        1.0f,                    // 最小終了サイズ
+        2.0f,                    // 最大終了サイズ
+        { 0.0f, 0.5f, 1.0f, 1.0f },  // 最小開始色（青色）を鮮やかに
+        { 0.5f, 0.7f, 1.0f, 1.0f },  // 最大開始色（水色）を鮮やかに
+        { 0.0f, 1.0f, 1.0f, 0.0f },  // 最小終了色（シアン、透明）
+        { 0.5f, 1.0f, 1.0f, 0.0f },  // 最大終了色（水色、透明）
+        0.0f,                        // 最小開始回転
+        3.14f * 2.0f,                // 最大開始回転
+        -1.0f,                       // 最小回転速度
+        1.0f,                        // 最大回転速度
+        1.0f,                        // 最小生存時間
+        3.0f                         // 最大生存時間
+    );
 
     // カメラの移動速度
     float cameraSpeed = 0.1f;
@@ -172,11 +175,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
     // マウスカーソルの表示状態
     bool showMouseCursor = false;
-
-    // オブジェクトリスト（一括操作用）
-    std::vector<Object3d*> allObjects = {
-        axisObject, dragonObject, planeObject
-    };
 
     // メインループ
     while (true) {
@@ -194,27 +192,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
-        // ImGuiウィンドウ
-        ImGui::Begin("Camera & Object Settings");
-
-        // カメラ切り替え
-        if (ImGui::Button("Switch Camera")) {
-            if (currentCamera == mainCamera) {
-                currentCamera = secondCamera;
-            }
-            else {
-                currentCamera = mainCamera;
-            }
-
-            // デフォルトカメラを更新
-            Object3dCommon::SetDefaultCamera(currentCamera);
-
-            // ドラゴンと床のカメラを更新（デフォルトカメラを使うオブジェクト）
-            // 特に何もしなくても、次のUpdateで新しいデフォルトカメラが使われる
-        }
-
-        // 現在のカメラ情報表示
-        ImGui::Text("Current Camera: %s", (currentCamera == mainCamera) ? "Main Camera" : "Second Camera");
+        // ImGuiウィンドウ - カメラ設定
+        ImGui::Begin("Camera Settings");
 
         // カメラ操作UI
         ImGui::Text("Camera Controls");
@@ -238,51 +217,102 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         }
 
         // マウス感度設定
-        if (ImGui::SliderFloat("Mouse Sensitivity", &mouseSensitivity, 0.001f, 0.01f)) {
-            // スライダーで値が変更された場合、自動的にmouseSensitivity変数が更新される
-        }
+        ImGui::SliderFloat("Mouse Sensitivity", &mouseSensitivity, 0.001f, 0.01f);
 
         // カメラ設定
-        Vector3 cameraPos = currentCamera->GetTranslate();
-        Vector3 cameraRot = currentCamera->GetRotate();
+        Vector3 cameraPos = camera->GetTranslate();
+        Vector3 cameraRot = camera->GetRotate();
 
         if (ImGui::DragFloat3("Camera Position", &cameraPos.x, 0.1f)) {
-            currentCamera->SetTranslate(cameraPos);
+            camera->SetTranslate(cameraPos);
         }
 
         if (ImGui::DragFloat3("Camera Rotation", &cameraRot.x, 0.01f)) {
-            currentCamera->SetRotate(cameraRot);
+            camera->SetRotate(cameraRot);
         }
 
-        float fovY = currentCamera->GetFovY();
+        float fovY = camera->GetFovY();
         if (ImGui::SliderFloat("Field of View", &fovY, 0.1f, 1.5f)) {
-            currentCamera->SetFovY(fovY);
+            camera->SetFovY(fovY);
         }
 
-        // モデル表示設定
+        ImGui::End();
+
+        // パーティクル設定用GUI
+        ImGui::Begin("Particle Settings");
+
+        // 煙エミッタの設定
+        ImGui::Text("Smoke Emitter");
+        Vector3 smokePos = smokeEmitter->GetPosition();
+        if (ImGui::DragFloat3("Smoke Position", &smokePos.x, 0.1f)) {
+            smokeEmitter->SetPosition(smokePos);
+        }
+        bool smokeEmitting = smokeEmitter->IsEmitting();
+        if (ImGui::Checkbox("Smoke Emitting", &smokeEmitting)) {
+            smokeEmitter->SetEmitting(smokeEmitting);
+        }
+        uint32_t smokeCount = smokeEmitter->GetEmitCount();
+        if (ImGui::DragInt("Smoke Count", (int*)&smokeCount, 1, 1, 100)) {
+            smokeEmitter->SetEmitCount(smokeCount);
+        }
+        float smokeRate = smokeEmitter->GetEmitRate();
+        if (ImGui::DragFloat("Smoke Rate", &smokeRate, 0.1f, 0.1f, 50.0f)) {
+            smokeEmitter->SetEmitRate(smokeRate);
+        }
+
+        // 炎エミッタの設定
+        ImGui::Text("Fire Emitter");
+        Vector3 firePos = fireEmitter->GetPosition();
+        if (ImGui::DragFloat3("Fire Position", &firePos.x, 0.1f)) {
+            fireEmitter->SetPosition(firePos);
+        }
+        bool fireEmitting = fireEmitter->IsEmitting();
+        if (ImGui::Checkbox("Fire Emitting", &fireEmitting)) {
+            fireEmitter->SetEmitting(fireEmitting);
+        }
+        uint32_t fireCount = fireEmitter->GetEmitCount();
+        if (ImGui::DragInt("Fire Count", (int*)&fireCount, 1, 1, 100)) {
+            fireEmitter->SetEmitCount(fireCount);
+        }
+        float fireRate = fireEmitter->GetEmitRate();
+        if (ImGui::DragFloat("Fire Rate", &fireRate, 0.1f, 0.1f, 50.0f)) {
+            fireEmitter->SetEmitRate(fireRate);
+        }
+
+        // 星エミッタの設定
+        ImGui::Text("Star Emitter");
+        Vector3 starPos = starEmitter->GetPosition();
+        if (ImGui::DragFloat3("Star Position", &starPos.x, 0.1f)) {
+            starEmitter->SetPosition(starPos);
+        }
+        bool starEmitting = starEmitter->IsEmitting();
+        if (ImGui::Checkbox("Star Emitting", &starEmitting)) {
+            starEmitter->SetEmitting(starEmitting);
+        }
+        uint32_t starCount = starEmitter->GetEmitCount();
+        if (ImGui::DragInt("Star Count", (int*)&starCount, 1, 1, 100)) {
+            starEmitter->SetEmitCount(starCount);
+        }
+        float starRate = starEmitter->GetEmitRate();
+        if (ImGui::DragFloat("Star Rate", &starRate, 0.1f, 0.1f, 50.0f)) {
+            starEmitter->SetEmitRate(starRate);
+        }
+
+        // デバッグ情報の表示
         ImGui::Separator();
-        ImGui::Text("Display Settings");
-        ImGui::Checkbox("Show Axis", &showAxis);
-        ImGui::Checkbox("Show Dragon", &showDragon);
-        ImGui::Checkbox("Show Plane", &showPlane);
+        ImGui::Text("Debug Info");
+        ImGui::Text("Camera Position: %.2f, %.2f, %.2f", cameraPos.x, cameraPos.y, cameraPos.z);
+        ImGui::Text("Smoke Position: %.2f, %.2f, %.2f", smokePos.x, smokePos.y, smokePos.z);
+        ImGui::Text("Fire Position: %.2f, %.2f, %.2f", firePos.x, firePos.y, firePos.z);
+        ImGui::Text("Star Position: %.2f, %.2f, %.2f", starPos.x, starPos.y, starPos.z);
+        ImGui::Text("Smoke Particles: %d", ParticleManager::GetInstance()->GetParticleCount("smoke"));
+        ImGui::Text("Fire Particles: %d", ParticleManager::GetInstance()->GetParticleCount("fire"));
+        ImGui::Text("Star Particles: %d", ParticleManager::GetInstance()->GetParticleCount("star"));
 
-        // ドラゴン設定
-        ImGui::Separator();
-        ImGui::Text("Dragon Settings");
-
-        Vector3 dragonPos = dragonObject->GetPosition();
-        if (ImGui::DragFloat3("Dragon Position", &dragonPos.x, 0.1f)) {
-            dragonObject->SetPosition(dragonPos);
-        }
-
-        Vector3 dragonRot = dragonObject->GetRotation();
-        if (ImGui::DragFloat3("Dragon Rotation", &dragonRot.x, 0.01f)) {
-            dragonObject->SetRotation(dragonRot);
-        }
-
-        ImGui::Checkbox("Auto Rotate Dragon", &autoRotateDragon);
-        if (autoRotateDragon) {
-            ImGui::SliderFloat("Rotation Speed", &dragonRotationSpeed, 0.001f, 0.05f);
+        // デバッグ用ボタン - シンプルな四角形描画テスト
+        if (ImGui::Button("Draw Simple Quad Test")) {
+            // 次のフレームで単純な四角形を描画するフラグを立てる
+            ParticleManager::GetInstance()->DrawSimpleQuad();
         }
 
         ImGui::End();
@@ -291,7 +321,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         DIMOUSESTATE mouseState;
         if (SUCCEEDED(input->GetMouseState(&mouseState)) && !showMouseCursor) {
             // マウスの移動量を回転に変換
-            Vector3 rot = currentCamera->GetRotate();
+            Vector3 rot = camera->GetRotate();
             rot.x += mouseState.lY * mouseSensitivity; // マウスY移動→X軸回転(上下)
             rot.y += mouseState.lX * mouseSensitivity; // マウスX移動→Y軸回転(左右)
 
@@ -299,7 +329,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
             if (rot.x > 1.55f) rot.x = 1.55f;
             if (rot.x < -1.55f) rot.x = -1.55f;
 
-            currentCamera->SetRotate(rot);
+            camera->SetRotate(rot);
 
             // マウスを中央に戻す
             POINT center;
@@ -310,7 +340,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         }
 
         // カメラの向きベクトルを計算
-        Vector3 rot = currentCamera->GetRotate();
+        Vector3 rot = camera->GetRotate();
         Vector3 forward = {
             sinf(rot.y),
             0.0f,
@@ -332,7 +362,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         right.z /= length;
 
         // キーボードによるカメラ操作（方向ベクトルに沿った移動）
-        Vector3 pos = currentCamera->GetTranslate();
+        Vector3 pos = camera->GetTranslate();
         if (input->PushKey(DIK_W)) {
             pos.x += forward.x * cameraSpeed;
             pos.z += forward.z * cameraSpeed;
@@ -357,17 +387,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
             pos.y -= cameraSpeed; // 下に移動
         }
 
-        currentCamera->SetTranslate(pos);
+        camera->SetTranslate(pos);
+
+        // カメラ移動に合わせて、パーティクルエミッタの位置も更新
+        smokeEmitter->SetPosition({ pos.x, pos.y, pos.z + 1.0f });
+        fireEmitter->SetPosition({ pos.x + 1.0f, pos.y, pos.z + 1.0f });
+        starEmitter->SetPosition({ pos.x - 1.0f, pos.y, pos.z + 1.0f });
 
         // マウスカーソル表示切替
         if (input->TriggerKey(DIK_ESCAPE)) { // ESCキーでマウスカーソル表示切替
             showMouseCursor = !showMouseCursor;
             input->SetMouseCursor(showMouseCursor);
 
-            // カーソル表示中はマウス操作を無効化
-            if (showMouseCursor) {
-            }
-            else {
+            if (!showMouseCursor) {
                 // マウスを中央に戻す
                 POINT center;
                 center.x = WinApp::kClientWidth / 2;
@@ -377,41 +409,26 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
             }
         }
 
-        // 自動回転
-        if (autoRotateDragon && showDragon) {
-            Vector3 rotation = dragonObject->GetRotation();
-            rotation.y += dragonRotationSpeed;
-            dragonObject->SetRotation(rotation);
-        }
+        // エミッタの更新
+        smokeEmitter->Update();
+        fireEmitter->Update();
+        starEmitter->Update();
 
-        // DirectXの描画準備
+        // パーティクルマネージャの更新
+        ParticleManager::GetInstance()->Update(camera);
+
+        // DirectXの描画準備 - 背景を黒色に変更
+        // dxCommon->Begin() の内部で float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f }; // 黒色
         dxCommon->Begin();
 
-        // SRVヒープのセット - 追加
+        // SRVヒープのセット
         srvManager->PreDraw();
 
         // カメラの更新
-        mainCamera->Update();
-        secondCamera->Update();
+        camera->Update();
 
-        // 3Dオブジェクトの更新と描画
-        if (showAxis) {
-            // axisObjectには明示的にカメラが設定されている
-            axisObject->Update();
-            axisObject->Draw();
-        }
-
-        if (showDragon) {
-            // dragonObjectはデフォルトカメラを使用
-            dragonObject->Update();
-            dragonObject->Draw();
-        }
-
-        if (showPlane) {
-            // planeObjectはデフォルトカメラを使用
-            planeObject->Update();
-            planeObject->Draw();
-        }
+        // パーティクルの描画
+        ParticleManager::GetInstance()->Draw();
 
         // ImGuiの描画
         ImGui::Render();
@@ -426,19 +443,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
 
-    // オブジェクトの解放
-    delete axisObject;
-    delete dragonObject;
-    delete planeObject;
-
-    // モデルの解放
-    delete axisModel;
-    delete dragonModel;
-    delete planeModel;
+    // パーティクルエミッタの解放
+    delete smokeEmitter;
+    delete fireEmitter;
+    delete starEmitter;
+    ParticleManager::GetInstance()->Finalize();
 
     // カメラの解放
-    delete mainCamera;
-    delete secondCamera;
+    delete camera;
 
     // 終了処理
     TextureManager::GetInstance()->Finalize();
@@ -446,7 +458,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     delete dxCommon;
     delete input;
     delete spriteCommon;
-    delete srvManager; 
+    delete srvManager;
 
     return 0;
 }

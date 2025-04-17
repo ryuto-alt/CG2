@@ -88,3 +88,11 @@ D3D12_GPU_DESCRIPTOR_HANDLE TextureManager::GetSrvHandleGPU(const std::string& f
     assert(textureDatas.count(filePath) > 0);
     return textureDatas[filePath].srvHandleGPU;
 }
+
+// テクスチャのSRVインデックスを取得（追加）
+uint32_t TextureManager::GetSrvIndex(const std::string& filePath)
+{
+    // ファイルパスをキーに持つテクスチャデータを取得
+    assert(textureDatas.count(filePath) > 0);
+    return textureDatas[filePath].srvIndex;
+}

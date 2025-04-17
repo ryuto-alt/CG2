@@ -46,6 +46,9 @@ public:
     // テクスチャ番号からCPUハンドルを取得
     D3D12_GPU_DESCRIPTOR_HANDLE GetSrvHandleGPU(const std::string& filePath);
 
+    // テクスチャのSRVインデックスを取得（追加）
+    uint32_t GetSrvIndex(const std::string& filePath);
+
 private:
     // テクスチャデータ
     std::unordered_map<std::string, TextureData> textureDatas;
