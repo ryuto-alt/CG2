@@ -141,7 +141,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     float cameraSpeed = 0.1f;
 
     // マウスの感度
-    float mouseSensitivity = 0.003f;
+    float mouseSensitivity = 0.0008f;
 
     // マウスカーソルの表示状態
     bool showMouseCursor = false;
