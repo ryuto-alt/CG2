@@ -39,6 +39,9 @@ public:
     // 描画処理
     void Draw();
 
+    // パーティクル用のパイプラインステート作成
+    void CreateParticlePipeline();
+
     // パーティクルの追加（指定位置に生成）
     void Emit(const Vector3& position, const Vector3& velocity, float scale, float life);
     // パーティクルの全追加（一斉に生成）
@@ -71,6 +74,9 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource> materialResource_;
     // マテリアルデータ
     Material* materialData_ = nullptr;
+
+    // パーティクル用のパイプラインステート
+    Microsoft::WRL::ComPtr<ID3D12PipelineState> particlePipelineState_;
 
     // 乱数生成器
     std::mt19937 randomEngine_;

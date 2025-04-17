@@ -152,9 +152,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
     // パーティクルシステムの初期化
     ParticleSystem* particleSystem = new ParticleSystem();
-    particleSystem->Initialize(dxCommon, spriteCommon, srvManager, 100); // 100個のパーティクル
+    particleSystem->Initialize(dxCommon, spriteCommon, srvManager, 10); // 100個のパーティクル
     particleSystem->SetModel(particleModel);
-    particleSystem->SetColor({ 1.0f, 0.5f, 0.2f, 0.8f }); // オレンジ色で半透明
+    particleSystem->SetColor({ 1.0f, 0.2f, 0.0f, 1.0f });
 
     // ライト設定
     DirectionalLight light;
@@ -318,7 +318,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
         if (ImGui::Button("Emit Particles")) {
             // 中央から爆発するようなエフェクト
-            particleSystem->EmitAll(dragonPos, 2.0f, 0.1f, 3.0f);
+            particleSystem->EmitAll(dragonObject->GetPosition(), 3.0f, 0.3f, 5.0f);
         }
 
         ImGui::End();

@@ -42,7 +42,9 @@ public:
 
     // テクスチャファイルの読み込み
     void LoadTexture(const std::string& filePath);
-
+    bool IsTextureLoaded(const std::string& filePath) {
+        return textureDatas.count(filePath) > 0;
+    }
     // テクスチャ番号からCPUハンドルを取得
     D3D12_GPU_DESCRIPTOR_HANDLE GetSrvHandleGPU(const std::string& filePath);
 
