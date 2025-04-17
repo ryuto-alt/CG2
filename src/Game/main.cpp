@@ -25,7 +25,8 @@
 #include "Model.h"
 #include "Object3d.h"
 #include "Camera.h"
-#include "SrvManager.h"  
+#include "SrvManager.h"
+#include "ParticleSystem.h"  // パーティクルシステムのインクルード
 
 // ImGuiの初期化関数
 void InitializeImGui(WinApp* winApp, DirectXCommon* dxCommon, SrvManager* srvManager) {
@@ -114,6 +115,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     planeModel->Initialize(dxCommon);
     planeModel->LoadFromObj("resources", "plane.obj");
 
+    // パーティクル用のモデル
+    Model* particleModel = new Model();
+    particleModel->Initialize(dxCommon);
+    particleModel->LoadFromObj("resources", "sphere.obj"); // 小さな球体をパーティクルとして使用
+
     // ===== 3Dオブジェクトの作成 =====
     // 座標軸表示用オブジェクト
     Object3d* axisObject = new Object3d();
@@ -144,6 +150,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     planeObject->SetColor({ 0.8f, 0.8f, 0.8f, 1.0f }); // 灰色
     // デフォルトカメラを使用する例（明示的に設定しない）
 
+    // パーティクルシステムの初期化
+    ParticleSystem* particleSystem = new ParticleSystem();
+    particleSystem->Initialize(dxCommon, spriteCommon, srvManager, 100); // 100個のパーティクル
+    particleSystem->SetModel(particleModel);
+    particleSystem->SetColor({ 1.0f, 0.5f, 0.2f, 0.8f }); // オレンジ色で半透明
+
     // ライト設定
     DirectionalLight light;
     light.color = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -172,6 +184,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
     // マウスカーソルの表示状態
     bool showMouseCursor = false;
+
+    // パーティクル関連
+    bool showParticles = true;
+    bool emitContinuous = false;
+    float emitTimer = 0.0f;
+    float emitInterval = 0.5f;
+    const float deltaTime = 1.0f / 60.0f; // フレームレート固定の場合の経過時間
 
     // オブジェクトリスト（一括操作用）
     std::vector<Object3d*> allObjects = {
@@ -265,6 +284,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         ImGui::Checkbox("Show Axis", &showAxis);
         ImGui::Checkbox("Show Dragon", &showDragon);
         ImGui::Checkbox("Show Plane", &showPlane);
+        ImGui::Checkbox("Show Particles", &showParticles);
 
         // ドラゴン設定
         ImGui::Separator();
@@ -283,6 +303,22 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         ImGui::Checkbox("Auto Rotate Dragon", &autoRotateDragon);
         if (autoRotateDragon) {
             ImGui::SliderFloat("Rotation Speed", &dragonRotationSpeed, 0.001f, 0.05f);
+        }
+
+        // パーティクル設定
+        ImGui::Separator();
+        ImGui::Text("Particle Settings");
+
+        Vector4 particleColor = { 1.0f, 0.5f, 0.2f, 0.8f };
+        if (ImGui::ColorEdit4("Particle Color", &particleColor.x)) {
+            particleSystem->SetColor(particleColor);
+        }
+
+        ImGui::Checkbox("Continuous Emission", &emitContinuous);
+
+        if (ImGui::Button("Emit Particles")) {
+            // 中央から爆発するようなエフェクト
+            particleSystem->EmitAll(dragonPos, 2.0f, 0.1f, 3.0f);
         }
 
         ImGui::End();
@@ -384,6 +420,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
             dragonObject->SetRotation(rotation);
         }
 
+        // パーティクル継続発生
+        if (emitContinuous && showParticles) {
+            emitTimer += deltaTime;
+            if (emitTimer >= emitInterval) {
+                emitTimer = 0.0f;
+                Vector3 emitPos = dragonObject->GetPosition();
+                particleSystem->Emit(
+                    emitPos,
+                    { 0.0f, 1.0f, 0.0f },  // 上向きの初速度
+                    0.1f,                  // サイズ
+                    2.0f                   // 寿命
+                );
+            }
+        }
+
         // DirectXの描画準備
         dxCommon->Begin();
 
@@ -413,6 +464,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
             planeObject->Draw();
         }
 
+        // パーティクルシステムの更新と描画
+        if (showParticles) {
+            // カメラのビュー行列とプロジェクション行列を渡す
+            particleSystem->Update(currentCamera->GetViewMatrix(), currentCamera->GetProjectionMatrix());
+            particleSystem->Draw();
+        }
+
         // ImGuiの描画
         ImGui::Render();
         ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), dxCommon->GetCommandList());
@@ -430,11 +488,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     delete axisObject;
     delete dragonObject;
     delete planeObject;
+    delete particleSystem;
 
     // モデルの解放
     delete axisModel;
     delete dragonModel;
     delete planeModel;
+    delete particleModel;
 
     // カメラの解放
     delete mainCamera;
@@ -446,7 +506,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     delete dxCommon;
     delete input;
     delete spriteCommon;
-    delete srvManager; 
+    delete srvManager;
 
     return 0;
 }

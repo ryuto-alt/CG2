@@ -111,6 +111,9 @@
     <ClCompile Include="src\Engine\Graphics\SRVManager.cpp">
       <Filter>src\engine\Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="src\Engine\Graphics\ParticleSystem.cpp">
+      <Filter>src\engine\Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="externals\imgui\imconfig.h">
@@ -200,6 +203,9 @@
     <ClInclude Include="src\Engine\Graphics\SRVManager.h">
       <Filter>src\engine\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="src\Engine\Graphics\ParticleSystem.h">
+      <Filter>src\engine\Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt">
@@ -210,12 +216,21 @@
     <None Include="Resources\shaders\Object3d.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
+    <None Include="Resources\shaders\particle.hlsli">
+      <Filter>リソース ファイル</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Resources\shaders\Object3d.PS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
     <FxCompile Include="Resources\shaders\Object3d.VS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Resources\shaders\particle.PS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Resources\shaders\particle.VS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
   </ItemGroup>
