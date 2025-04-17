@@ -78,10 +78,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     // パーティクルマネージャの初期化
     ParticleManager::GetInstance()->Initialize(dxCommon, srvManager);
 
-    // パーティクルグループの作成
-    ParticleManager::GetInstance()->CreateParticleGroup("smoke", "resources/particle/smoke.png");
-    ParticleManager::GetInstance()->CreateParticleGroup("fire", "resources/particle/fire.png");
+    // パーティクルグループの作成 - star.pngのみを使用
     ParticleManager::GetInstance()->CreateParticleGroup("star", "resources/particle/star.png");
+    ParticleManager::GetInstance()->CreateParticleGroup("star_green", "resources/particle/star.png");
+    ParticleManager::GetInstance()->CreateParticleGroup("star_purple", "resources/particle/star.png");
 
     // ImGuiの初期化
     InitializeImGui(winApp, dxCommon, srvManager);
@@ -99,62 +99,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     camera->SetTranslate({ 0.0f, 0.0f, -5.0f });
     Object3dCommon::SetDefaultCamera(camera);
 
-    // カメラの視点から少し前方にパーティクルエミッタを配置
-    Vector3 cameraPos = camera->GetTranslate();
-    Vector3 cameraFront = { 0.0f, 0.0f, 1.0f }; // カメラは-Z方向を向いている
-
-    // パーティクルエミッタの作成 - カメラのすぐ前に配置（非常に大きなサイズで）
-   // パーティクルエミッタの作成 - パーティクル数を大幅に削減
-    // main.cpp の修正
-
-// 1. パーティクルエミッタの初期化部分 - 固定位置で初期化
-// カメラの位置と関係なく、ワールド内の固定位置を設定
-    ParticleEmitter* smokeEmitter = new ParticleEmitter(
-        "smoke",
-        { 0.0f, 0.5f, -2.0f },    // 固定位置
-        2,                        // 一度に発生する数
-        0.5f,                     // 発生頻度
-        { -0.5f, 0.5f, -0.5f },   // 最小速度
-        { 0.5f, 1.0f, 0.5f },     // 最大速度
-        { 0.0f, 0.0f, 0.0f },     // 最小加速度
-        { 0.0f, 0.5f, 0.0f },     // 最大加速度
-        5.0f,                     // 最小開始サイズ
-        10.0f,                    // 最大開始サイズ
-        7.0f,                     // 最小終了サイズ
-        15.0f,                    // 最大終了サイズ
-        { 1.0f, 1.0f, 1.0f, 1.0f },  // 最小開始色（白）
-        { 1.0f, 1.0f, 1.0f, 1.0f },  // 最大開始色（白）
-        { 1.0f, 1.0f, 1.0f, 0.0f },  // 最小終了色（透明）
-        { 1.0f, 1.0f, 1.0f, 0.0f },  // 最大終了色（透明）
-        0.0f, 0.0f, 0.0f, 0.0f,      // 回転パラメータ
-        0.5f,                     // 最小生存時間
-        1.0f                      // 最大生存時間
-    );
-
-    ParticleEmitter* fireEmitter = new ParticleEmitter(
-        "fire",
-        { 1.0f, 0.5f, -2.0f },    // 固定位置
-        2,                        // 一度に発生する数
-        0.5f,                     // 発生頻度
-        { -0.2f, 0.5f, -0.2f },   // 最小速度
-        { 0.2f, 1.0f, 0.2f },     // 最大速度
-        { 0.0f, 0.0f, 0.0f },     // 最小加速度
-        { 0.0f, 0.0f, 0.0f },     // 最大加速度
-        5.0f,                     // 最小開始サイズ
-        8.0f,                     // 最大開始サイズ
-        2.0f,                     // 最小終了サイズ
-        4.0f,                     // 最大終了サイズ
-        { 1.0f, 0.2f, 0.0f, 1.0f },  // 最小開始色（赤橙色）
-        { 1.0f, 0.5f, 0.0f, 1.0f },  // 最大開始色（橙色）
-        { 1.0f, 0.0f, 0.0f, 0.0f },  // 最小終了色（赤、透明）
-        { 1.0f, 0.2f, 0.0f, 0.0f },  // 最大終了色（赤橙、透明）
-        0.0f, 0.0f, 0.0f, 0.0f,      // 回転パラメータ
-        0.5f,                     // 最小生存時間
-        1.0f                      // 最大生存時間
-    );
-
-    ParticleEmitter* starEmitter = new ParticleEmitter(
-        "star",
+    // 青色系の星パーティクル
+    ParticleEmitter* blueStarEmitter = new ParticleEmitter(
+        "star",  // 元のグループ名
         { -1.0f, 0.5f, -2.0f },   // 固定位置
         2,                        // 一度に発生する数
         0.3f,                     // 発生頻度
@@ -176,6 +123,58 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         1.0f,                        // 最大回転速度
         0.5f,                        // 最小生存時間
         1.0f                         // 最大生存時間
+    );
+
+    // 緑色系の星パーティクル - 横方向の動きを強調
+    ParticleEmitter* greenStarEmitter = new ParticleEmitter(
+        "star_green",  // 新しいグループ名
+        { 0.0f, 0.5f, -2.0f },    // 固定位置（中央）
+        2,                        // 一度に発生する数
+        0.4f,                     // 発生頻度
+        { -1.5f, 0.1f, -0.2f },   // 最小速度 - 横方向に強い
+        { 1.5f, 0.8f, 0.2f },     // 最大速度 - 横方向に強い
+        { 0.0f, 0.1f, 0.0f },     // 最小加速度 - わずかに上向き
+        { 0.0f, 0.3f, 0.0f },     // 最大加速度 - わずかに上向き
+        3.0f,                     // 最小開始サイズ
+        5.0f,                     // 最大開始サイズ
+        0.5f,                     // 最小終了サイズ
+        1.5f,                     // 最大終了サイズ
+        { 0.0f, 0.8f, 0.2f, 1.0f },  // 最小開始色（緑色）
+        { 0.2f, 1.0f, 0.5f, 1.0f },  // 最大開始色（明るい緑）
+        { 0.1f, 0.7f, 0.3f, 0.0f },  // 最小終了色（緑、透明）
+        { 0.3f, 1.0f, 0.6f, 0.0f },  // 最大終了色（明るい緑、透明）
+        0.0f,                        // 最小開始回転
+        3.14f * 2.0f,                // 最大開始回転
+        -2.0f,                       // 最小回転速度 - 速い回転
+        2.0f,                        // 最大回転速度 - 速い回転
+        0.6f,                        // 最小生存時間
+        1.2f                         // 最大生存時間
+    );
+
+    // 紫色系の星パーティクル - 爆発的な動き
+    ParticleEmitter* purpleStarEmitter = new ParticleEmitter(
+        "star_purple",  // 新しいグループ名
+        { 1.0f, 0.5f, -2.0f },    // 固定位置（右側）
+        3,                        // 一度に発生する数
+        0.6f,                     // 発生頻度
+        { -2.0f, -2.0f, -2.0f },  // 最小速度 - 全方向に強い
+        { 2.0f, 2.0f, 2.0f },     // 最大速度 - 全方向に強い
+        { 0.0f, -0.2f, 0.0f },    // 最小加速度 - わずかに下向き - 修正：min <= max になるよう値を入れ替え
+        { 0.0f, -0.1f, 0.0f },    // 最大加速度 - わずかに下向き - 修正：min <= max になるよう値を入れ替え
+        2.0f,                     // 最小開始サイズ
+        4.0f,                     // 最大開始サイズ
+        0.2f,                     // 最小終了サイズ - 小さく消えていく
+        0.5f,                     // 最大終了サイズ - 小さく消えていく
+        { 0.8f, 0.2f, 1.0f, 1.0f },  // 最小開始色（紫色）
+        { 1.0f, 0.4f, 1.0f, 1.0f },  // 最大開始色（明るい紫）
+        { 0.6f, 0.0f, 0.8f, 0.0f },  // 最小終了色（暗い紫、透明）
+        { 1.0f, 0.2f, 1.0f, 0.0f },  // 最大終了色（紫、透明）
+        0.0f,                        // 最小開始回転
+        3.14f * 2.0f,                // 最大開始回転
+        -3.0f,                       // 最小回転速度 - 非常に速い回転
+        3.0f,                        // 最大回転速度 - 非常に速い回転
+        0.4f,                        // 最小生存時間 - 短め
+        0.8f                         // 最大生存時間 - 短め
     );
 
     // カメラの移動速度
@@ -252,73 +251,73 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         // パーティクル設定用GUI
         ImGui::Begin("Particle Settings");
 
-        // 煙エミッタの設定
-        ImGui::Text("Smoke Emitter");
-        Vector3 smokePos = smokeEmitter->GetPosition();
-        if (ImGui::DragFloat3("Smoke Position", &smokePos.x, 0.1f)) {
-            smokeEmitter->SetPosition(smokePos);
+        // 青色の星エミッタの設定
+        ImGui::Text("Blue Star Emitter");
+        Vector3 bluePos = blueStarEmitter->GetPosition();
+        if (ImGui::DragFloat3("Blue Position", &bluePos.x, 0.1f)) {
+            blueStarEmitter->SetPosition(bluePos);
         }
-        bool smokeEmitting = smokeEmitter->IsEmitting();
-        if (ImGui::Checkbox("Smoke Emitting", &smokeEmitting)) {
-            smokeEmitter->SetEmitting(smokeEmitting);
+        bool blueEmitting = blueStarEmitter->IsEmitting();
+        if (ImGui::Checkbox("Blue Emitting", &blueEmitting)) {
+            blueStarEmitter->SetEmitting(blueEmitting);
         }
-        uint32_t smokeCount = smokeEmitter->GetEmitCount();
-        if (ImGui::DragInt("Smoke Count", (int*)&smokeCount, 1, 1, 100)) {
-            smokeEmitter->SetEmitCount(smokeCount);
+        uint32_t blueCount = blueStarEmitter->GetEmitCount();
+        if (ImGui::DragInt("Blue Count", (int*)&blueCount, 1, 1, 10)) {
+            blueStarEmitter->SetEmitCount(blueCount);
         }
-        float smokeRate = smokeEmitter->GetEmitRate();
-        if (ImGui::DragFloat("Smoke Rate", &smokeRate, 0.1f, 0.1f, 50.0f)) {
-            smokeEmitter->SetEmitRate(smokeRate);
-        }
-
-        // 炎エミッタの設定
-        ImGui::Text("Fire Emitter");
-        Vector3 firePos = fireEmitter->GetPosition();
-        if (ImGui::DragFloat3("Fire Position", &firePos.x, 0.1f)) {
-            fireEmitter->SetPosition(firePos);
-        }
-        bool fireEmitting = fireEmitter->IsEmitting();
-        if (ImGui::Checkbox("Fire Emitting", &fireEmitting)) {
-            fireEmitter->SetEmitting(fireEmitting);
-        }
-        uint32_t fireCount = fireEmitter->GetEmitCount();
-        if (ImGui::DragInt("Fire Count", (int*)&fireCount, 1, 1, 100)) {
-            fireEmitter->SetEmitCount(fireCount);
-        }
-        float fireRate = fireEmitter->GetEmitRate();
-        if (ImGui::DragFloat("Fire Rate", &fireRate, 0.1f, 0.1f, 50.0f)) {
-            fireEmitter->SetEmitRate(fireRate);
+        float blueRate = blueStarEmitter->GetEmitRate();
+        if (ImGui::DragFloat("Blue Rate", &blueRate, 0.1f, 0.1f, 5.0f)) {
+            blueStarEmitter->SetEmitRate(blueRate);
         }
 
-        // 星エミッタの設定
-        ImGui::Text("Star Emitter");
-        Vector3 starPos = starEmitter->GetPosition();
-        if (ImGui::DragFloat3("Star Position", &starPos.x, 0.1f)) {
-            starEmitter->SetPosition(starPos);
+        // 緑色の星エミッタの設定
+        ImGui::Text("Green Star Emitter");
+        Vector3 greenPos = greenStarEmitter->GetPosition();
+        if (ImGui::DragFloat3("Green Position", &greenPos.x, 0.1f)) {
+            greenStarEmitter->SetPosition(greenPos);
         }
-        bool starEmitting = starEmitter->IsEmitting();
-        if (ImGui::Checkbox("Star Emitting", &starEmitting)) {
-            starEmitter->SetEmitting(starEmitting);
+        bool greenEmitting = greenStarEmitter->IsEmitting();
+        if (ImGui::Checkbox("Green Emitting", &greenEmitting)) {
+            greenStarEmitter->SetEmitting(greenEmitting);
         }
-        uint32_t starCount = starEmitter->GetEmitCount();
-        if (ImGui::DragInt("Star Count", (int*)&starCount, 1, 1, 100)) {
-            starEmitter->SetEmitCount(starCount);
+        uint32_t greenCount = greenStarEmitter->GetEmitCount();
+        if (ImGui::DragInt("Green Count", (int*)&greenCount, 1, 1, 10)) {
+            greenStarEmitter->SetEmitCount(greenCount);
         }
-        float starRate = starEmitter->GetEmitRate();
-        if (ImGui::DragFloat("Star Rate", &starRate, 0.1f, 0.1f, 50.0f)) {
-            starEmitter->SetEmitRate(starRate);
+        float greenRate = greenStarEmitter->GetEmitRate();
+        if (ImGui::DragFloat("Green Rate", &greenRate, 0.1f, 0.1f, 5.0f)) {
+            greenStarEmitter->SetEmitRate(greenRate);
+        }
+
+        // 紫色の星エミッタの設定
+        ImGui::Text("Purple Star Emitter");
+        Vector3 purplePos = purpleStarEmitter->GetPosition();
+        if (ImGui::DragFloat3("Purple Position", &purplePos.x, 0.1f)) {
+            purpleStarEmitter->SetPosition(purplePos);
+        }
+        bool purpleEmitting = purpleStarEmitter->IsEmitting();
+        if (ImGui::Checkbox("Purple Emitting", &purpleEmitting)) {
+            purpleStarEmitter->SetEmitting(purpleEmitting);
+        }
+        uint32_t purpleCount = purpleStarEmitter->GetEmitCount();
+        if (ImGui::DragInt("Purple Count", (int*)&purpleCount, 1, 1, 10)) {
+            purpleStarEmitter->SetEmitCount(purpleCount);
+        }
+        float purpleRate = purpleStarEmitter->GetEmitRate();
+        if (ImGui::DragFloat("Purple Rate", &purpleRate, 0.1f, 0.1f, 5.0f)) {
+            purpleStarEmitter->SetEmitRate(purpleRate);
         }
 
         // デバッグ情報の表示
         ImGui::Separator();
         ImGui::Text("Debug Info");
         ImGui::Text("Camera Position: %.2f, %.2f, %.2f", cameraPos.x, cameraPos.y, cameraPos.z);
-        ImGui::Text("Smoke Position: %.2f, %.2f, %.2f", smokePos.x, smokePos.y, smokePos.z);
-        ImGui::Text("Fire Position: %.2f, %.2f, %.2f", firePos.x, firePos.y, firePos.z);
-        ImGui::Text("Star Position: %.2f, %.2f, %.2f", starPos.x, starPos.y, starPos.z);
-        ImGui::Text("Smoke Particles: %d", ParticleManager::GetInstance()->GetParticleCount("smoke"));
-        ImGui::Text("Fire Particles: %d", ParticleManager::GetInstance()->GetParticleCount("fire"));
-        ImGui::Text("Star Particles: %d", ParticleManager::GetInstance()->GetParticleCount("star"));
+        ImGui::Text("Blue Star Position: %.2f, %.2f, %.2f", bluePos.x, bluePos.y, bluePos.z);
+        ImGui::Text("Green Star Position: %.2f, %.2f, %.2f", greenPos.x, greenPos.y, greenPos.z);
+        ImGui::Text("Purple Star Position: %.2f, %.2f, %.2f", purplePos.x, purplePos.y, purplePos.z);
+        ImGui::Text("Blue Star Particles: %d", ParticleManager::GetInstance()->GetParticleCount("star"));
+        ImGui::Text("Green Star Particles: %d", ParticleManager::GetInstance()->GetParticleCount("star_green"));
+        ImGui::Text("Purple Star Particles: %d", ParticleManager::GetInstance()->GetParticleCount("star_purple"));
 
         // デバッグ用ボタン - シンプルな四角形描画テスト
         if (ImGui::Button("Draw Simple Quad Test")) {
@@ -400,7 +399,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
         camera->SetTranslate(pos);
 
-   
         // マウスカーソル表示切替
         if (input->TriggerKey(DIK_ESCAPE)) { // ESCキーでマウスカーソル表示切替
             showMouseCursor = !showMouseCursor;
@@ -417,9 +415,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         }
 
         // エミッタの更新
-        smokeEmitter->Update();
-        fireEmitter->Update();
-        starEmitter->Update();
+        blueStarEmitter->Update();
+        greenStarEmitter->Update();
+        purpleStarEmitter->Update();
 
         // パーティクルマネージャの更新
         ParticleManager::GetInstance()->Update(camera);
@@ -451,9 +449,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     ImGui::DestroyContext();
 
     // パーティクルエミッタの解放
-    delete smokeEmitter;
-    delete fireEmitter;
-    delete starEmitter;
+    delete blueStarEmitter;
+    delete greenStarEmitter;
+    delete purpleStarEmitter;
     ParticleManager::GetInstance()->Finalize();
 
     // カメラの解放
