@@ -117,16 +117,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     planeObject->SetColor({ 0.8f, 0.8f, 0.8f, 1.0f }); // 灰色
     // デフォルトカメラを使用する例（明示的に設定しない）
 
-    // 追加のオブジェクト（カメラ位置表示用）
-    Object3d* cameraObject = new Object3d();
-    cameraObject->Initialize(dxCommon, spriteCommon);
-    cameraObject->SetModel(dragonModel);
-    cameraObject->SetPosition(secondCamera->GetTranslate());
-    cameraObject->SetScale({ 0.05f, 0.05f, 0.05f }); // 小さめに表示
-    cameraObject->SetColor({ 0.0f, 1.0f, 0.0f, 1.0f }); // 緑色
-    // 常にメインカメラで描画
-    cameraObject->SetCamera(mainCamera);
-
     // ライト設定
     DirectionalLight light;
     light.color = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -137,7 +127,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     axisObject->SetDirectionalLight(light);
     dragonObject->SetDirectionalLight(light);
     planeObject->SetDirectionalLight(light);
-    cameraObject->SetDirectionalLight(light);
 
     // 表示するモデルの選択
     bool showAxis = true;
@@ -153,7 +142,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
     // オブジェクトリスト（一括操作用）
     std::vector<Object3d*> allObjects = {
-        axisObject, dragonObject, planeObject, cameraObject
+        axisObject, dragonObject, planeObject
     };
 
     // メインループ
@@ -293,21 +282,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
             dragonObject->SetRotation(rotation);
         }
 
-        // カメラオブジェクトの位置を2つ目のカメラの位置に更新
-        cameraObject->SetPosition(secondCamera->GetTranslate());
-
         // DirectXの描画準備
         dxCommon->Begin();
 
         // カメラの更新
         mainCamera->Update();
         secondCamera->Update();
-
-        // カメラオブジェクトの更新と描画（常にメインカメラで描画）
-        cameraObject->Update();
-        if (currentCamera == mainCamera) {
-            cameraObject->Draw();
-        }
 
         // 3Dオブジェクトの更新と描画
         if (showAxis) {
@@ -345,7 +325,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     delete axisObject;
     delete dragonObject;
     delete planeObject;
-    delete cameraObject;
 
     // モデルの解放
     delete axisModel;
