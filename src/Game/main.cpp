@@ -140,6 +140,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     // カメラの移動速度
     float cameraSpeed = 0.1f;
 
+    // マウスの感度
+    float mouseSensitivity = 0.003f;
+
+    // マウスカーソルの表示状態
+    bool showMouseCursor = false;
+
     // オブジェクトリスト（一括操作用）
     std::vector<Object3d*> allObjects = {
         axisObject, dragonObject, planeObject
@@ -185,7 +191,29 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
         // カメラ操作UI
         ImGui::Text("Camera Controls");
-        ImGui::Text("WASD: Move Camera | Arrow Keys: Rotate Camera");
+        ImGui::Text("WASD: Move in the direction you're facing");
+        ImGui::Text("Mouse: Look around");
+        ImGui::Text("SPACE: Move Up | SHIFT: Move Down");
+        ImGui::Text("TAB: Toggle mouse cursor visibility");
+
+        // マウスカーソル状態の表示とチェックボックスで切り替え
+        if (ImGui::Checkbox("Show Mouse Cursor", &showMouseCursor)) {
+            input->SetMouseCursor(showMouseCursor);
+
+            if (!showMouseCursor) {
+                // マウスカーソルを非表示にした場合、マウスを中央に戻す
+                POINT center;
+                center.x = WinApp::kClientWidth / 2;
+                center.y = WinApp::kClientHeight / 2;
+                ClientToScreen(winApp->GetHwnd(), &center);
+                SetCursorPos(center.x, center.y);
+            }
+        }
+
+        // マウス感度設定
+        if (ImGui::SliderFloat("Mouse Sensitivity", &mouseSensitivity, 0.001f, 0.01f)) {
+            // スライダーで値が変更された場合、自動的にmouseSensitivity変数が更新される
+        }
 
         // カメラ設定
         Vector3 cameraPos = currentCamera->GetTranslate();
@@ -232,47 +260,99 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
         ImGui::End();
 
-        // キーボードによるカメラ操作
-        if (input->PushKey(DIK_W)) {
-            Vector3 pos = currentCamera->GetTranslate();
-            pos.z += cameraSpeed;
-            currentCamera->SetTranslate(pos);
-        }
-        if (input->PushKey(DIK_S)) {
-            Vector3 pos = currentCamera->GetTranslate();
-            pos.z -= cameraSpeed;
-            currentCamera->SetTranslate(pos);
-        }
-        if (input->PushKey(DIK_A)) {
-            Vector3 pos = currentCamera->GetTranslate();
-            pos.x -= cameraSpeed;
-            currentCamera->SetTranslate(pos);
-        }
-        if (input->PushKey(DIK_D)) {
-            Vector3 pos = currentCamera->GetTranslate();
-            pos.x += cameraSpeed;
-            currentCamera->SetTranslate(pos);
+        // マウス入力の取得とカメラ回転
+        DIMOUSESTATE mouseState;
+        if (SUCCEEDED(input->GetMouseState(&mouseState)) && !showMouseCursor) {
+            // マウスの移動量を回転に変換
+            Vector3 rot = currentCamera->GetRotate();
+            rot.x += mouseState.lY * mouseSensitivity; // マウスY移動→X軸回転(上下)
+            rot.y += mouseState.lX * mouseSensitivity; // マウスX移動→Y軸回転(左右)
+
+            // 上下の視点移動を制限（-89°～89°）
+            if (rot.x > 1.55f) rot.x = 1.55f;
+            if (rot.x < -1.55f) rot.x = -1.55f;
+
+            currentCamera->SetRotate(rot);
+
+            // マウスを中央に戻す
+            POINT center;
+            center.x = WinApp::kClientWidth / 2;
+            center.y = WinApp::kClientHeight / 2;
+            ClientToScreen(winApp->GetHwnd(), &center);
+            SetCursorPos(center.x, center.y);
         }
 
-        if (input->PushKey(DIK_UP)) {
-            Vector3 rot = currentCamera->GetRotate();
-            rot.x += 0.01f;
-            currentCamera->SetRotate(rot);
+        // カメラの向きベクトルを計算
+        Vector3 rot = currentCamera->GetRotate();
+        Vector3 forward = {
+            sinf(rot.y),
+            0.0f,
+            cosf(rot.y)
+        };
+        Vector3 right = {
+            cosf(rot.y),
+            0.0f,
+            -sinf(rot.y)
+        };
+
+        // 正規化（単位ベクトル化）
+        float length = sqrtf(forward.x * forward.x + forward.z * forward.z);
+        forward.x /= length;
+        forward.z /= length;
+
+        length = sqrtf(right.x * right.x + right.z * right.z);
+        right.x /= length;
+        right.z /= length;
+
+        // キーボードによるカメラ操作（方向ベクトルに沿った移動）
+        Vector3 pos = currentCamera->GetTranslate();
+        if (input->PushKey(DIK_W)) {
+            pos.x += forward.x * cameraSpeed;
+            pos.z += forward.z * cameraSpeed;
         }
-        if (input->PushKey(DIK_DOWN)) {
-            Vector3 rot = currentCamera->GetRotate();
-            rot.x -= 0.01f;
-            currentCamera->SetRotate(rot);
+        if (input->PushKey(DIK_S)) {
+            pos.x -= forward.x * cameraSpeed;
+            pos.z -= forward.z * cameraSpeed;
         }
-        if (input->PushKey(DIK_LEFT)) {
-            Vector3 rot = currentCamera->GetRotate();
-            rot.y -= 0.01f;
-            currentCamera->SetRotate(rot);
+        if (input->PushKey(DIK_A)) {
+            pos.x -= right.x * cameraSpeed;
+            pos.z -= right.z * cameraSpeed;
         }
-        if (input->PushKey(DIK_RIGHT)) {
-            Vector3 rot = currentCamera->GetRotate();
-            rot.y += 0.01f;
-            currentCamera->SetRotate(rot);
+        if (input->PushKey(DIK_D)) {
+            pos.x += right.x * cameraSpeed;
+            pos.z += right.z * cameraSpeed;
+        }
+        // 上下移動の追加
+        if (input->PushKey(DIK_SPACE)) {
+            pos.y += cameraSpeed; // 上に移動
+        }
+        if (input->PushKey(DIK_LSHIFT)) {
+            pos.y -= cameraSpeed; // 下に移動
+        }
+
+        currentCamera->SetTranslate(pos);
+
+        // マウスカーソル表示切替
+        if (input->TriggerKey(DIK_ESCAPE)) { // TABキーでマウスカーソル表示切替
+            showMouseCursor = !showMouseCursor;
+            input->SetMouseCursor(showMouseCursor);
+
+            // カーソル表示中はマウス操作を無効化
+            if (showMouseCursor) {
+                // カーソル表示時は通常のウィンドウモードに
+                // 必要に応じてここでカメラ操作の一時停止処理を追加
+            }
+            else {
+                // カーソル非表示時はゲームモードに戻す
+                // 必要に応じてここでカメラ操作の再開処理を追加
+
+                // マウスを中央に戻す
+                POINT center;
+                center.x = WinApp::kClientWidth / 2;
+                center.y = WinApp::kClientHeight / 2;
+                ClientToScreen(winApp->GetHwnd(), &center);
+                SetCursorPos(center.x, center.y);
+            }
         }
 
         // ドラゴンの自動回転

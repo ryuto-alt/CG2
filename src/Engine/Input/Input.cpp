@@ -24,6 +24,21 @@ void Input::Initialize(WinApp* winApp)
 	//排他制御レベルのセット
 	hr = keyboard->SetCooperativeLevel(winApp->GetHwnd(), DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY);
 	assert(SUCCEEDED(hr));
+
+	//マウスデバイス生成
+	hr = directInput->CreateDevice(GUID_SysMouse, &mouse, NULL);
+	assert(SUCCEEDED(hr));
+
+	//入力データ形式のセット
+	hr = mouse->SetDataFormat(&c_dfDIMouse);
+	assert(SUCCEEDED(hr));
+
+	//排他制御レベルのセット
+	hr = mouse->SetCooperativeLevel(winApp->GetHwnd(), DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
+	assert(SUCCEEDED(hr));
+
+	// マウスカーソルを非表示
+	SetMouseCursor(false);
 }
 
 void Input::Update()
@@ -34,10 +49,10 @@ void Input::Update()
 	keyboard->Acquire();
 	//全キーボード入力情報を取得
 	keyboard->GetDeviceState(sizeof(key), key);
+
+	//マウス情報の取得
+	mouse->Acquire();
 }
-
-
-
 
 bool Input::PushKey(BYTE keyNumber)
 {
@@ -53,4 +68,14 @@ bool Input::TriggerKey(BYTE keyNumber)
 		return true;
 	}
 	return false;
+}
+
+HRESULT Input::GetMouseState(DIMOUSESTATE* mouseState)
+{
+	return mouse->GetDeviceState(sizeof(DIMOUSESTATE), mouseState);
+}
+
+void Input::SetMouseCursor(bool visible)
+{
+	ShowCursor(visible);
 }
