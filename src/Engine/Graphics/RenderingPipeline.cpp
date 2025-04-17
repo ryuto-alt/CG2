@@ -23,12 +23,12 @@ Matrix4x4 MakePerspectiveFovMatrix(float fovY, float aspectRatio, float nearCilp
 
 	ans.m[2][0] = 0;
 	ans.m[2][1] = 0;
-	ans.m[2][2] = nearCilp / (farClip - nearCilp);
+	ans.m[2][2] = farClip / (farClip - nearCilp);
 	ans.m[2][3] = 1;
 
 	ans.m[3][0] = 0;
 	ans.m[3][1] = 0;
-	ans.m[3][2] = -(nearCilp + nearCilp) / (farClip - nearCilp);
+	ans.m[3][2] = -(nearCilp * farClip) / (farClip - nearCilp);
 	ans.m[3][3] = 0;
 
 	return ans;
