@@ -108,6 +108,9 @@
     <ClCompile Include="src\Engine\Camera\Camera.cpp">
       <Filter>src\engine\Camera</Filter>
     </ClCompile>
+    <ClCompile Include="src\Engine\Graphics\SRVManager.cpp">
+      <Filter>src\engine\Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="externals\imgui\imconfig.h">
@@ -193,6 +196,9 @@
     </ClInclude>
     <ClInclude Include="src\Engine\Camera\Camera.h">
       <Filter>src\engine\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Graphics\SRVManager.h">
+      <Filter>src\engine\Graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <cmath>
 
-Model::Model() : textureIndex_(0), dxCommon_(nullptr) {}
+Model::Model() : dxCommon_(nullptr) {}
 
 Model::~Model() {}
 
@@ -26,7 +26,6 @@ void Model::LoadFromObj(const std::string& directoryPath, const std::string& fil
     // テクスチャの読み込み
     if (!modelData_.material.textureFilePath.empty()) {
         TextureManager::GetInstance()->LoadTexture(modelData_.material.textureFilePath);
-        textureIndex_ = TextureManager::GetInstance()->GetTextureIndexByFilePath(modelData_.material.textureFilePath);
     }
 
     // 頂点バッファの作成

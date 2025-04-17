@@ -28,7 +28,7 @@ public:
     const std::vector<VertexData>& GetVertices() const { return modelData_.vertices; }
     uint32_t GetVertexCount() const { return static_cast<uint32_t>(modelData_.vertices.size()); }
     const MaterialData& GetMaterial() const { return modelData_.material; }
-    uint32_t GetTextureIndex() const { return textureIndex_; }
+    const std::string& GetTextureFilePath() const { return modelData_.material.textureFilePath; }
     const D3D12_VERTEX_BUFFER_VIEW& GetVBView() const { return vertexBufferView_; }
     ID3D12Resource* GetVertexResource() const { return vertexResource_.Get(); }
 
@@ -47,8 +47,6 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource> vertexResource_;
     // 頂点バッファビュー
     D3D12_VERTEX_BUFFER_VIEW vertexBufferView_{};
-    // テクスチャインデックス
-    uint32_t textureIndex_;
     // DirectXCommon
     DirectXCommon* dxCommon_;
 };

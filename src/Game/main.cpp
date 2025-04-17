@@ -26,6 +26,26 @@
 #include "Model.h"
 #include "Object3d.h"
 #include "Camera.h"
+#include "SrvManager.h"  // 追加
+
+// ImGuiの初期化関数
+void InitializeImGui(WinApp* winApp, DirectXCommon* dxCommon, SrvManager* srvManager) {
+    // ImGui初期化
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui::StyleColorsDark();
+    ImGui_ImplWin32_Init(winApp->GetHwnd());
+
+    // SrvManagerのディスクリプタヒープを使用
+    ImGui_ImplDX12_Init(
+        dxCommon->GetDevice(),
+        2, // SwapChainのバッファ数
+        DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+        srvManager->GetDescriptorHeap().Get(),
+        srvManager->GetCPUDescriptorHandle(0), // ImGui用に0番を使用
+        srvManager->GetGPUDescriptorHandle(0)
+    );
+}
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     D3DResourceLeakChecker leakCheck;
@@ -39,6 +59,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     DirectXCommon* dxCommon = nullptr;
     Input* input = nullptr;
     SpriteCommon* spriteCommon = nullptr;
+    SrvManager* srvManager = nullptr;  // 追加
 
     // WindowsAPI初期化
     winApp = new WinApp;
@@ -48,8 +69,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     dxCommon = new DirectXCommon();
     dxCommon->Initialize(winApp);
 
+    // SRVマネージャの初期化 - 追加
+    srvManager = new SrvManager();
+    srvManager->Initialize(dxCommon);
+
     // テクスチャマネージャの初期化
-    TextureManager::GetInstance()->Initialize(dxCommon);
+    TextureManager::GetInstance()->Initialize(dxCommon, srvManager);  // 引数追加
+
+    // ImGuiの初期化を追加
+    InitializeImGui(winApp, dxCommon, srvManager);
 
     // 入力初期化
     input = new Input();
@@ -194,7 +222,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         ImGui::Text("WASD: Move in the direction you're facing");
         ImGui::Text("Mouse: Look around");
         ImGui::Text("SPACE: Move Up | SHIFT: Move Down");
-        ImGui::Text("TAB: Toggle mouse cursor visibility");
+        ImGui::Text("ESC: Toggle mouse cursor visibility");
 
         // マウスカーソル状態の表示とチェックボックスで切り替え
         if (ImGui::Checkbox("Show Mouse Cursor", &showMouseCursor)) {
@@ -333,7 +361,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         currentCamera->SetTranslate(pos);
 
         // マウスカーソル表示切替
-        if (input->TriggerKey(DIK_ESCAPE)) { // TABキーでマウスカーソル表示切替
+        if (input->TriggerKey(DIK_ESCAPE)) { // ESCキーでマウスカーソル表示切替
             showMouseCursor = !showMouseCursor;
             input->SetMouseCursor(showMouseCursor);
 
@@ -364,6 +392,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
         // DirectXの描画準備
         dxCommon->Begin();
+
+        // SRVヒープのセット - 追加
+        srvManager->PreDraw();
 
         // カメラの更新
         mainCamera->Update();
@@ -421,6 +452,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     delete dxCommon;
     delete input;
     delete spriteCommon;
+    delete srvManager;  // 追加
 
     return 0;
 }

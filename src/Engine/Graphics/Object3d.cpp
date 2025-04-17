@@ -115,8 +115,12 @@ void Object3d::Draw() {
     // 変換行列CBufferの場所を設定
     dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, transformationMatrixResource_->GetGPUVirtualAddress());
 
-    // テクスチャの場所を設定
-    dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2, TextureManager::GetInstance()->GetSrvHandleGPU(model_->GetTextureIndex()));
+    // テクスチャの場所を設定（ファイルパスベースに変更）
+    std::string texturePath = model_->GetTextureFilePath();
+    if (!texturePath.empty()) {
+        dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2,
+            TextureManager::GetInstance()->GetSrvHandleGPU(texturePath));
+    }
 
     // ライトCBufferの場所を設定
     dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(3, directionalLightResource_->GetGPUVirtualAddress());

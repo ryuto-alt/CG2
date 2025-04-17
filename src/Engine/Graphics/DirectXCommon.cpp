@@ -5,13 +5,12 @@
 #pragma comment(lib,"dxgi.lib")
 #include "Logger.h"
 #include "StringUtility.h"
+#include "SrvManager.h"
 
 
 using namespace Microsoft::WRL;
 using namespace Logger;
 using namespace StringUtility;
-
-const uint32_t DirectXCommon::kMaxSRVCount = 512;
 
 void DirectXCommon::DeviceInitialize()
 {
@@ -145,11 +144,9 @@ void DirectXCommon::DepthBufferInitialize()
 void DirectXCommon::DescriptorHeapInitialize()
 {
 	//サイズを取得
-	descriptorSizeSRV = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	descriptorSizeRTV = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	descriptorSizeDSV = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 	rtvDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);//RTV
-	srvDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, true);//SRV
 	dsvDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, false);
 }
 
@@ -246,12 +243,9 @@ void DirectXCommon::ImguiInitialize()
 	ImGui::CreateContext();
 	ImGui::StyleColorsDark();
 	ImGui_ImplWin32_Init(winApp_->GetHwnd());
-	ImGui_ImplDX12_Init(device.Get(),
-		swapChainDesc.BufferCount,
-		rtvDesc.Format,
-		srvDescriptorHeap.Get(),
-		srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
-		srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+
+	// ヒープはSrvManagerが管理するものを使用
+	// この部分は後ほど別途ImGuiManagerクラスを作成して管理する
 }
 
 
@@ -272,7 +266,7 @@ void DirectXCommon::Initialize(WinApp* winApp)
 	ViewportInitialize();
 	ScissorInitialize();
 	DxcCompilerInitialize();
-	ImguiInitialize();
+	// ImguiInitializeは後ほど別途ImGuiManagerクラスを作成して管理する
 }
 
 
@@ -302,9 +296,9 @@ void DirectXCommon::Begin()
 	//指定した色で画面全体をクリアする
 	float clearColor[] = { 0.1f,0.25f,0.5f,1.0f };//青っぽい色。RGBAの順
 	commandList->ClearRenderTargetView(rtvHandles[backBufferIndex], clearColor, 0, nullptr);
-	//描画用のDescript
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> descriptorHeaps[] = { srvDescriptorHeap };
-	commandList->SetDescriptorHeaps(1, descriptorHeaps->GetAddressOf());
+
+	// SRVヒープの設定はSrvManagerのPreDraw()で行う
+
 	//コマンドリストの内容を確定させる。すべてのコマンドを積んでからCloseすること
 	commandList->RSSetViewports(1, &viewport);
 	commandList->RSSetScissorRects(1, &scissorRect);
@@ -351,14 +345,24 @@ void DirectXCommon::End()
 }
 
 
-D3D12_CPU_DESCRIPTOR_HANDLE DirectXCommon::GetSRVCPUDescriptorHandle(uint32_t index)
+D3D12_CPU_DESCRIPTOR_HANDLE DirectXCommon::GetRTVCPUDescriptorHandle(uint32_t index)
 {
-	return GetCPUDescriptorHandle(srvDescriptorHeap, descriptorSizeSRV, index);
+	return GetCPUDescriptorHandle(rtvDescriptorHeap, descriptorSizeRTV, index);
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE DirectXCommon::GetSRVGPUDescriptorHandle(uint32_t index)
+D3D12_GPU_DESCRIPTOR_HANDLE DirectXCommon::GetRTVGPUDescriptorHandle(uint32_t index)
 {
-	return GetGPUDescriptorHandle(srvDescriptorHeap, descriptorSizeSRV, index);
+	return GetGPUDescriptorHandle(rtvDescriptorHeap, descriptorSizeRTV, index);
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE DirectXCommon::GetDSVCPUDescriptorHandle(uint32_t index)
+{
+	return GetCPUDescriptorHandle(dsvDescriptorHeap, descriptorSizeDSV, index);
+}
+
+D3D12_GPU_DESCRIPTOR_HANDLE DirectXCommon::GetDSVGPUDescriptorHandle(uint32_t index)
+{
+	return GetGPUDescriptorHandle(dsvDescriptorHeap, descriptorSizeDSV, index);
 }
 
 
@@ -449,9 +453,9 @@ IDxcBlob* DirectXCommon::CompileShader(const std::wstring& filePath, const wchar
 	IDxcResult* shaderResult = nullptr;
 	hr = dxcCompiler->Compile(
 		&shaderSourceBuffer,
-		arguments,			
+		arguments,
 		_countof(arguments),
-		includeHandler,		
+		includeHandler,
 		IID_PPV_ARGS(&shaderResult)
 	);//コンパイルエラーではなくDXCが起動できない致命的な状況
 	assert(SUCCEEDED(hr));

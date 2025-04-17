@@ -41,10 +41,6 @@ public:
 	//描画後処理
 	void End();
 
-
-	
-	D3D12_CPU_DESCRIPTOR_HANDLE GetSRVCPUDescriptorHandle(uint32_t index);
-	D3D12_GPU_DESCRIPTOR_HANDLE GetSRVGPUDescriptorHandle(uint32_t index);
 	D3D12_CPU_DESCRIPTOR_HANDLE GetRTVCPUDescriptorHandle(uint32_t index);
 	D3D12_GPU_DESCRIPTOR_HANDLE GetRTVGPUDescriptorHandle(uint32_t index);
 	D3D12_CPU_DESCRIPTOR_HANDLE GetDSVCPUDescriptorHandle(uint32_t index);
@@ -77,7 +73,6 @@ public:
 	DirectX::ScratchImage LoadTexture(const std::string& filePath);
 
 	void CommandKick();
-	static const uint32_t kMaxSRVCount;
 	const D3D12_DEPTH_STENCIL_DESC& GetDepthStencilDesc() const {
 		return depthStencilDesc;
 	}
@@ -99,11 +94,9 @@ private:
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> depthStencilResource;
 
-	uint32_t descriptorSizeSRV;
 	uint32_t descriptorSizeRTV;
 	uint32_t descriptorSizeDSV;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rtvDescriptorHeap;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> srvDescriptorHeap;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> dsvDescriptorHeap;
 
 	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};

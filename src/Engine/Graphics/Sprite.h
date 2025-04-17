@@ -124,7 +124,8 @@ private:
 	Vector2 position = { 0.0f,0.0f };
 	float rotation = 0.0f;
 
-	uint32_t textureIndex = 0;
+	// テクスチャファイルパスを保持
+	std::string textureFilePath;
 
 	// アンカーポイント 中心位置を変えれる
 	Vector2 anchorPoint_ = { 0.0f,0.0f };

@@ -112,6 +112,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="src\Engine\Graphics\RenderingPipeline.cpp" />
     <ClCompile Include="src\Engine\Graphics\Sprite.cpp" />
     <ClCompile Include="src\Engine\Graphics\SpriteCommon.cpp" />
+    <ClCompile Include="src\Engine\Graphics\SRVManager.cpp" />
     <ClCompile Include="src\Engine\Graphics\TextureManager.cpp" />
     <ClCompile Include="src\Engine\Input\Input.cpp" />
     <ClCompile Include="src\Engine\Math\Mymath.cpp" />
@@ -138,6 +139,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="src\Engine\Graphics\ResourceObject.h" />
     <ClInclude Include="src\Engine\Graphics\Sprite.h" />
     <ClInclude Include="src\Engine\Graphics\SpriteCommon.h" />
+    <ClInclude Include="src\Engine\Graphics\SRVManager.h" />
     <ClInclude Include="src\Engine\Graphics\TextureManager.h" />
     <ClInclude Include="src\Engine\Input\Input.h" />
     <ClInclude Include="src\Engine\Math\Matrix3x3.h" />
