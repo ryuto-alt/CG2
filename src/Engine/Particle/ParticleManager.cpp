@@ -119,6 +119,9 @@ void ParticleManager::InitializeGraphicsPipeline() {
     blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
     blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
     blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+    // サンプルマスクを追加
+    blendDesc.RenderTarget[0].LogicOpEnable = FALSE;
+    blendDesc.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NOOP;
 
     // ラスタライザー設定
     D3D12_RASTERIZER_DESC rasterizerDesc{};
@@ -129,33 +132,46 @@ void ParticleManager::InitializeGraphicsPipeline() {
     D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
     depthStencilDesc.DepthEnable = false; // 深度テストを無効化
 
-    // ルートパラメータの設定 - 新しいシェーダーに合わせる
-    D3D12_ROOT_PARAMETER rootParameters[3] = {};
+    // ルートパラメータの設定 - シェーダーに合わせて修正（4つのパラメータを使用）
+    D3D12_ROOT_PARAMETER rootParameters[4] = {}; // 4つのパラメータに変更
 
-    // マテリアル用（b0）
+    // マテリアル用（b0, PS）
     rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
     rootParameters[0].Descriptor.ShaderRegister = 0;
     rootParameters[0].Descriptor.RegisterSpace = 0;
     rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
-    // ディレクショナルライト用（b1）
+    // ディレクショナルライト用（b1, PS）
     rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
     rootParameters[1].Descriptor.ShaderRegister = 1;
     rootParameters[1].Descriptor.RegisterSpace = 0;
     rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
-    // インスタンシングデータ用（t0）
-    D3D12_DESCRIPTOR_RANGE descriptorRange{};
-    descriptorRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-    descriptorRange.NumDescriptors = 1;
-    descriptorRange.BaseShaderRegister = 0;
-    descriptorRange.RegisterSpace = 0;
-    descriptorRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+    // テクスチャ用（t0, PS）
+    D3D12_DESCRIPTOR_RANGE textureRange{};
+    textureRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    textureRange.NumDescriptors = 1;
+    textureRange.BaseShaderRegister = 0;
+    textureRange.RegisterSpace = 0;
+    textureRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
     rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
     rootParameters[2].DescriptorTable.NumDescriptorRanges = 1;
-    rootParameters[2].DescriptorTable.pDescriptorRanges = &descriptorRange;
-    rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+    rootParameters[2].DescriptorTable.pDescriptorRanges = &textureRange;
+    rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+    // インスタンシングデータ用（t0, VS）
+    D3D12_DESCRIPTOR_RANGE instanceRange{};
+    instanceRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    instanceRange.NumDescriptors = 1;
+    instanceRange.BaseShaderRegister = 0;
+    instanceRange.RegisterSpace = 0;
+    instanceRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+    rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    rootParameters[3].DescriptorTable.NumDescriptorRanges = 1;
+    rootParameters[3].DescriptorTable.pDescriptorRanges = &instanceRange;
+    rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
 
     // サンプラーの設定
     D3D12_STATIC_SAMPLER_DESC staticSamplerDesc{};
@@ -206,6 +222,7 @@ void ParticleManager::InitializeGraphicsPipeline() {
     pipelineDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
     pipelineDesc.SampleDesc.Count = 1;
     pipelineDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    pipelineDesc.SampleMask = 0xffffffff; // すべてのサンプルを有効化
 
     hr = dxCommon_->GetDevice()->CreateGraphicsPipelineState(
         &pipelineDesc, IID_PPV_ARGS(pipelineState.GetAddressOf()));
@@ -514,11 +531,11 @@ void ParticleManager::Draw() {
             continue;
         }
 
-        // テクスチャをセット
+        // テクスチャをセット（ピクセルシェーダー用）
         srvManager_->SetGraphicsRootDescriptorTable(2, group.textureSrvIndex);
 
-        // インスタンシングデータをセット
-        srvManager_->SetGraphicsRootDescriptorTable(2, group.instanceSrvIndex);
+        // インスタンシングデータをセット（頂点シェーダー用）
+        srvManager_->SetGraphicsRootDescriptorTable(3, group.instanceSrvIndex);
 
         // 描画（インスタンシング）
         commandList->DrawInstanced(4, group.instanceCount, 0, 0);
