@@ -108,7 +108,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
     Model* dragonModel = new Model();
     dragonModel->Initialize(dxCommon);
-    dragonModel->LoadFromObj("resources", "dragon.obj");
+    dragonModel->LoadFromObj("resources", "sphere.obj");
 
     Model* planeModel = new Model();
     planeModel->Initialize(dxCommon);
