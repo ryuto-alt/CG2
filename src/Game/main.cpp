@@ -27,6 +27,9 @@
 #include "ParticleManager.h"
 #include "ParticleEmitter.h"
 
+// オーディオ関連のヘッダー
+#include "AudioManager.h"
+
 // ImGuiの初期化関数
 void InitializeImGui(WinApp* winApp, DirectXCommon* dxCommon, SrvManager* srvManager) {
     // ImGui初期化
@@ -74,6 +77,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
     // テクスチャマネージャの初期化
     TextureManager::GetInstance()->Initialize(dxCommon, srvManager);
+
+    // AudioManagerの初期化
+    AudioManager::GetInstance()->Initialize();
+
+    // テスト用サウンドファイルの読み込み
+    bool bgmLoaded = AudioManager::GetInstance()->LoadWAV("bgm", "resources/audio/bgm.wav");
+    bool seLoaded = AudioManager::GetInstance()->LoadWAV("se_shot", "resources/audio/se_shot.wav");
+
+    // テスト用MP3ファイルの読み込み
+    bool mp3Loaded = AudioManager::GetInstance()->LoadMP3("music", "resources/audio/music.mp3");
 
     // パーティクルマネージャの初期化
     ParticleManager::GetInstance()->Initialize(dxCommon, srvManager);
@@ -327,6 +340,70 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
         ImGui::End();
 
+        // オーディオ設定用GUI
+        ImGui::Begin("Audio Settings");
+
+        // BGM再生/停止ボタン
+        if (bgmLoaded) {
+            if (ImGui::Button("Play BGM")) {
+                AudioManager::GetInstance()->Play("bgm", true); // ループ再生
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Stop BGM")) {
+                AudioManager::GetInstance()->Stop("bgm");
+            }
+        }
+
+        // 効果音再生ボタン
+        if (seLoaded) {
+            if (ImGui::Button("Play SE")) {
+                AudioManager::GetInstance()->Play("se_shot", false); // 一回再生
+            }
+        }
+
+        // MP3再生/停止ボタン（読み込みが成功した場合のみ表示）
+        if (mp3Loaded) {
+            if (ImGui::Button("Play MP3")) {
+                AudioManager::GetInstance()->Play("music", true); // ループ再生
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Stop MP3")) {
+                AudioManager::GetInstance()->Stop("music");
+            }
+        }
+
+        // マスターボリューム設定スライダー
+        static float masterVolume = 1.0f;
+        if (ImGui::SliderFloat("Master Volume", &masterVolume, 0.0f, 1.0f)) {
+            AudioManager::GetInstance()->SetMasterVolume(masterVolume);
+        }
+
+        // BGMボリューム設定スライダー
+        if (bgmLoaded) {
+            static float bgmVolume = 1.0f;
+            if (ImGui::SliderFloat("BGM Volume", &bgmVolume, 0.0f, 1.0f)) {
+                AudioManager::GetInstance()->SetVolume("bgm", bgmVolume);
+            }
+        }
+
+        // SE（効果音）ボリューム設定スライダー
+        if (seLoaded) {
+            static float seVolume = 1.0f;
+            if (ImGui::SliderFloat("SE Volume", &seVolume, 0.0f, 1.0f)) {
+                AudioManager::GetInstance()->SetVolume("se_shot", seVolume);
+            }
+        }
+
+        // MP3ボリューム設定スライダー（読み込みが成功した場合のみ表示）
+        if (mp3Loaded) {
+            static float mp3Volume = 1.0f;
+            if (ImGui::SliderFloat("MP3 Volume", &mp3Volume, 0.0f, 1.0f)) {
+                AudioManager::GetInstance()->SetVolume("music", mp3Volume);
+            }
+        }
+
+        ImGui::End();
+
         // マウス入力の取得とカメラ回転
         DIMOUSESTATE mouseState;
         if (SUCCEEDED(input->GetMouseState(&mouseState)) && !showMouseCursor) {
@@ -422,8 +499,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         // パーティクルマネージャの更新
         ParticleManager::GetInstance()->Update(camera);
 
-        // DirectXの描画準備 - 背景を黒色に変更
-        // dxCommon->Begin() の内部で float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f }; // 黒色
+        // オーディオマネージャの更新
+        AudioManager::GetInstance()->Update();
+
+        // DirectXの描画準備
         dxCommon->Begin();
 
         // SRVヒープのセット
@@ -453,6 +532,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     delete greenStarEmitter;
     delete purpleStarEmitter;
     ParticleManager::GetInstance()->Finalize();
+
+    // オーディオマネージャの解放
+    AudioManager::GetInstance()->Finalize();
 
     // カメラの解放
     delete camera;

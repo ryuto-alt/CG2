@@ -43,6 +43,9 @@
     <Filter Include="src\engine\Particle">
       <UniqueIdentifier>{4a4d7a49-a2df-41bd-9337-ad326d029107}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\engine\Audio">
+      <UniqueIdentifier>{cb4ffee6-723f-49dd-bcac-5a6673f04b84}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="externals\imgui\imgui.cpp">
@@ -119,6 +122,18 @@
     </ClCompile>
     <ClCompile Include="src\Engine\Particle\ParticleEmitter.cpp">
       <Filter>src\engine\Particle</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Audio\AudioManager.cpp">
+      <Filter>src\engine\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Audio\AudioSource.cpp">
+      <Filter>src\engine\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Audio\Mp3File.cpp">
+      <Filter>src\engine\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Audio\WaveFile.cpp">
+      <Filter>src\engine\Audio</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -214,6 +229,18 @@
     </ClInclude>
     <ClInclude Include="src\Engine\Particle\ParticleEmitter.h">
       <Filter>src\engine\Particle</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Audio\AudioManager.h">
+      <Filter>src\engine\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Audio\AudioSource.h">
+      <Filter>src\engine\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Audio\Mp3File.h">
+      <Filter>src\engine\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Audio\WaveFile.h">
+      <Filter>src\engine\Audio</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
