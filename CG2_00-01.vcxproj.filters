@@ -46,6 +46,9 @@
     <Filter Include="src\engine\Audio">
       <UniqueIdentifier>{cb4ffee6-723f-49dd-bcac-5a6673f04b84}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\engine\Core">
+      <UniqueIdentifier>{35403220-089e-43d0-8e45-2cc669bbc0fa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="externals\imgui\imgui.cpp">
@@ -137,6 +140,9 @@
     </ClCompile>
     <ClCompile Include="src\Game\MyGame.cpp">
       <Filter>src\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Core\Framework.cpp">
+      <Filter>src\engine\Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -247,6 +253,9 @@
     </ClInclude>
     <ClInclude Include="src\Game\MyGame.h">
       <Filter>src\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Core\Framework.h">
+      <Filter>src\engine\Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

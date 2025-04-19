@@ -22,17 +22,16 @@ MyGame::MyGame()
     , masterVolume_(1.0f)
     , bgmVolume_(1.0f)
     , seVolume_(1.0f)
-    , mp3Volume_(1.0f)
-    , isEndRequested_(false) {
+    , mp3Volume_(1.0f) {
 }
 
 MyGame::~MyGame() {
-    Finalize();
+    // Framework::Finalizeが呼ばれるので、ここでは追加の処理は不要
 }
 
-void MyGame::Initialize(WinApp* winApp) {
-    // WinAppの設定
-    winApp_ = winApp;
+void MyGame::Initialize() {
+    // WinAppが設定されていることを確認
+    assert(winApp_ != nullptr);
 
     // DirectXCommonの初期化
     dxCommon_ = new DirectXCommon();
@@ -185,7 +184,7 @@ void MyGame::InitializeParticleEmitters() {
 void MyGame::Update() {
     // Windowsのメッセージ処理
     if (winApp_->ProcessMessage()) {
-        isEndRequested_ = true;
+        endRequest_ = true;
         return;
     }
 

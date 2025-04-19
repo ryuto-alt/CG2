@@ -14,18 +14,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     WinApp* winApp = new WinApp();
     winApp->Initialize();
 
-    // ゲームの作成と初期化
+    // ゲームの作成
     MyGame* game = new MyGame();
-    game->Initialize(winApp);
 
-    // メインループ
-    while (!game->IsEndRequested()) {
-        // ゲームの更新と描画
-        game->Update();
-        game->Draw();
-    }
+    // WinAppを設定
+    game->SetWinApp(winApp);
 
-    // ゲームの終了処理
+    // ゲームのメインループを実行
+    // これにより、Initialize -> (Update/Draw のループ) -> Finalize の流れが実行される
+    game->Run();
+
+    // ゲームの解放
     delete game;
 
     // WindowsAPIの終了処理

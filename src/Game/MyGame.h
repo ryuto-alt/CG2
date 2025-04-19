@@ -1,6 +1,6 @@
 #pragma once
 
-#include "WinApp.h"
+#include "Framework.h"
 #include "DirectXCommon.h"
 #include "Input.h"
 #include "SpriteCommon.h"
@@ -16,26 +16,20 @@
 #include "imgui_impl_win32.h"
 
 // ゲーム全体を管理するクラス
-class MyGame {
+class MyGame : public Framework {
 public:
     // コンストラクタ・デストラクタ
     MyGame();
-    ~MyGame();
+    ~MyGame() override;
 
-    // 初期化
-    void Initialize(WinApp* winApp);
+    // WinAppの設定
+    void SetWinApp(WinApp* winApp) { winApp_ = winApp; }
 
-    // 更新処理
-    void Update();
-
-    // 描画処理
-    void Draw();
-
-    // 終了処理
-    void Finalize();
-
-    // ゲームが終了するべきかどうか
-    bool IsEndRequested() const { return isEndRequested_; }
+    // Frameworkの関数をオーバーライド
+    void Initialize() override;
+    void Update() override;
+    void Draw() override;
+    void Finalize() override;
 
 private:
     // ImGuiの初期化
@@ -77,7 +71,4 @@ private:
     float bgmVolume_;
     float seVolume_;
     float mp3Volume_;
-
-    // ゲーム制御フラグ
-    bool isEndRequested_;
 };
