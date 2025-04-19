@@ -1,8 +1,9 @@
-// MyGame.cpp（修正版）
+// MyGame.cpp
 #include "MyGame.h"
 #include "D3DResourceCheck.h"
 #include <string>
 #include <algorithm>
+#include <ParticleManager.h>
 
 MyGame::MyGame()
     : winApp_(nullptr)
@@ -50,6 +51,12 @@ void MyGame::Initialize() {
     camera_->SetTranslate({ 0.0f, 0.0f, -5.0f });
     Object3dCommon::SetDefaultCamera(camera_);
 
+    // パーティクルマネージャの初期化
+    ParticleManager::GetInstance()->Initialize(dxCommon_, srvManager_);
+
+    // 基本的なパーティクルグループの作成
+    ParticleManager::GetInstance()->CreateParticleGroup("smoke", "Resources/particle/smoke.png");
+
     // シーンファクトリーの作成
     sceneFactory_ = new GameSceneFactory();
 
@@ -92,6 +99,9 @@ void MyGame::Update() {
     // 入力更新
     input_->Update();
 
+    // パーティクルマネージャの更新
+    ParticleManager::GetInstance()->Update(camera_);
+
     // シーンマネージャーの更新
     sceneManager_->Update();
 }
@@ -103,6 +113,9 @@ void MyGame::Draw() {
     // シーンマネージャーの描画
     sceneManager_->Draw();
 
+    // パーティクルの描画
+    ParticleManager::GetInstance()->Draw();
+
     // 描画終了
     dxCommon_->End();
 }
@@ -110,6 +123,9 @@ void MyGame::Draw() {
 void MyGame::Finalize() {
     // シーンマネージャーの終了処理
     sceneManager_->Finalize();
+
+    // パーティクルマネージャーの終了処理
+    ParticleManager::GetInstance()->Finalize();
 
     // シーンファクトリーの解放
     delete sceneFactory_;

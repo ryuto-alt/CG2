@@ -1,20 +1,21 @@
-// GamePlayScene.h
-// ゲームプレイシーンクラス
+// TitleScene.h
+// タイトルシーンクラス
 #pragma once
 
 #include "IScene.h"
+#include "Sprite.h"
 #include "Object3d.h"
 #include "Model.h"
 #include <memory>
 
-// ゲームプレイシーンクラス
-class GamePlayScene : public IScene {
+// タイトルシーンクラス
+class TitleScene : public IScene {
 public:
     // コンストラクタ
-    GamePlayScene();
+    TitleScene();
 
     // デストラクタ
-    ~GamePlayScene() override;
+    ~TitleScene() override;
 
     // 初期化
     void Initialize() override;
@@ -29,19 +30,25 @@ public:
     void Finalize() override;
 
 private:
-    // 各種ヘルパーメソッド
+    // ImGuiの初期化
     void InitializeImGui();
+
+    // 3Dモデルの初期化
     void Initialize3DModels();
+
+    // デバッグ情報描画
     void DrawImGui();
-    void ControlCamera();
 
 private:
     // シーンの状態管理
     bool initialized_ = false;
 
+    // タイトルロゴ
+    std::unique_ptr<Sprite> titleLogo_;
+
     // 3Dモデル
-    std::unique_ptr<Model> axisModel_;
-    std::unique_ptr<Object3d> axisObject_;
+    std::unique_ptr<Model> sphereModel_;
+    std::unique_ptr<Object3d> sphereObject_;
 
     // 回転角度
     float rotationAngle_ = 0.0f;

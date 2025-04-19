@@ -17,8 +17,8 @@ void SceneManager::Initialize(SceneFactory* sceneFactory) {
     assert(sceneFactory);
     sceneFactory_ = sceneFactory;
 
-    // 最初のシーンを設定（例: "GamePlay"）
-    nextScene_ = "GamePlay";
+    // 最初のシーンをTitleに設定
+    nextScene_ = "Title";
 }
 
 void SceneManager::Update() {
