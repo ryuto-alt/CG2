@@ -1,3 +1,4 @@
+// main.cpp（修正版）
 #include <windows.h>
 #include "WinApp.h"
 #include "MyGame.h"

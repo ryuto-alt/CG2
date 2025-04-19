@@ -1,3 +1,4 @@
+// MyGame.h（修正版）
 #pragma once
 
 #include "Framework.h"
@@ -7,9 +8,8 @@
 #include "TextureManager.h"
 #include "Camera.h"
 #include "SrvManager.h"
-#include "ParticleManager.h"
-#include "ParticleEmitter.h"
-#include "AudioManager.h"
+#include "SceneManager.h"
+#include "SceneFactory.h"
 
 #include "imgui.h"
 #include "imgui_impl_dx12.h"
@@ -25,6 +25,9 @@ public:
     // WinAppの設定
     void SetWinApp(WinApp* winApp) { winApp_ = winApp; }
 
+    // WinAppの取得
+    WinApp* GetWinApp() const { return winApp_; }
+
     // Frameworkの関数をオーバーライド
     void Initialize() override;
     void Update() override;
@@ -35,15 +38,6 @@ private:
     // ImGuiの初期化
     void InitializeImGui();
 
-    // パーティクルエミッタの初期化
-    void InitializeParticleEmitters();
-
-    // ImGuiの描画処理
-    void DrawImGui();
-
-    // カメラ操作
-    void ControlCamera();
-
 private:
     // 基本システム
     WinApp* winApp_;
@@ -53,22 +47,7 @@ private:
     SrvManager* srvManager_;
     Camera* camera_;
 
-    // パーティクル関連
-    ParticleEmitter* blueStarEmitter_;
-    ParticleEmitter* greenStarEmitter_;
-    ParticleEmitter* purpleStarEmitter_;
-
-    // カメラ設定
-    float cameraSpeed_;
-    float mouseSensitivity_;
-    bool showMouseCursor_;
-
-    // オーディオ関連
-    bool bgmLoaded_;
-    bool seLoaded_;
-    bool mp3Loaded_;
-    float masterVolume_;
-    float bgmVolume_;
-    float seVolume_;
-    float mp3Volume_;
+    // シーン管理関連
+    SceneManager* sceneManager_;
+    GameSceneFactory* sceneFactory_;
 };

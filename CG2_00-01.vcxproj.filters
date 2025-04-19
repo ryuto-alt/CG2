@@ -49,6 +49,9 @@
     <Filter Include="src\engine\Core">
       <UniqueIdentifier>{35403220-089e-43d0-8e45-2cc669bbc0fa}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Game\scene">
+      <UniqueIdentifier>{ab838d56-9817-460e-80e1-344c346a53cd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="externals\imgui\imgui.cpp">
@@ -143,6 +146,15 @@
     </ClCompile>
     <ClCompile Include="src\Engine\Core\Framework.cpp">
       <Filter>src\engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Game\scene\SceneManager.cpp">
+      <Filter>src\Game\scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Game\scene\SceneFactory.cpp">
+      <Filter>src\Game\scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Game\scene\GamePlayScene.cpp">
+      <Filter>src\Game\scene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -256,6 +268,18 @@
     </ClInclude>
     <ClInclude Include="src\Engine\Core\Framework.h">
       <Filter>src\engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\scene\IScene.h">
+      <Filter>src\Game\scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\scene\SceneManager.h">
+      <Filter>src\Game\scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\scene\SceneFactory.h">
+      <Filter>src\Game\scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\scene\GamePlayScene.h">
+      <Filter>src\Game\scene</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
