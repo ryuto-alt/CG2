@@ -512,6 +512,11 @@ void MyGame::Draw() {
 }
 
 void MyGame::Finalize() {
+    // 終了前にカーソルを必ず表示状態にする
+    if (!showMouseCursor_) {
+        input_->SetMouseCursor(true);
+    }
+
     // ImGuiの解放
     ImGui_ImplDX12_Shutdown();
     ImGui_ImplWin32_Shutdown();

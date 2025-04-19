@@ -16,6 +16,8 @@ public:
 	void Initialize(WinApp* winApp);
 	//更新
 	void Update();
+	//終了処理
+	void Finalize();
 
 	//キーの状態
 	bool PushKey(BYTE keyNumber);
@@ -33,4 +35,3 @@ private:
 	ComPtr<IDirectInput8>directInput = nullptr;
 	WinApp* winApp_ = nullptr;
 };
-

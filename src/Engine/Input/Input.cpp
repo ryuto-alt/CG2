@@ -36,9 +36,6 @@ void Input::Initialize(WinApp* winApp)
 	//排他制御レベルのセット
 	hr = mouse->SetCooperativeLevel(winApp->GetHwnd(), DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
 	assert(SUCCEEDED(hr));
-
-	// マウスカーソルを非表示
-	SetMouseCursor(false);
 }
 
 void Input::Update()
@@ -52,6 +49,30 @@ void Input::Update()
 
 	//マウス情報の取得
 	mouse->Acquire();
+}
+
+void Input::Finalize()
+{
+	// マウスカーソルを必ず表示に戻す
+	SetMouseCursor(true);
+
+	// デバイスの解放
+	if (mouse) {
+		mouse->Unacquire();
+		mouse->Release();
+		mouse = nullptr;
+	}
+
+	if (keyboard) {
+		keyboard->Unacquire();
+		keyboard->Release();
+		keyboard = nullptr;
+	}
+
+	if (directInput) {
+		directInput->Release();
+		directInput = nullptr;
+	}
 }
 
 bool Input::PushKey(BYTE keyNumber)
