@@ -135,6 +135,9 @@
     <ClCompile Include="src\Engine\Audio\WaveFile.cpp">
       <Filter>src\engine\Audio</Filter>
     </ClCompile>
+    <ClCompile Include="src\Game\MyGame.cpp">
+      <Filter>src\Game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="externals\imgui\imconfig.h">
@@ -241,6 +244,9 @@
     </ClInclude>
     <ClInclude Include="src\Engine\Audio\WaveFile.h">
       <Filter>src\engine\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\MyGame.h">
+      <Filter>src\Game</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
