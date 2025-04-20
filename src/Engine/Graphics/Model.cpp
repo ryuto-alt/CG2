@@ -25,7 +25,21 @@ void Model::LoadFromObj(const std::string& directoryPath, const std::string& fil
 
     // テクスチャの読み込み
     if (!modelData_.material.textureFilePath.empty()) {
-        TextureManager::GetInstance()->LoadTexture(modelData_.material.textureFilePath);
+        // テクスチャが存在するかチェック
+        DWORD fileAttributes = GetFileAttributesA(modelData_.material.textureFilePath.c_str());
+        if (fileAttributes != INVALID_FILE_ATTRIBUTES) {
+            // テクスチャが存在する場合のみ読み込み
+            TextureManager::GetInstance()->LoadTexture(modelData_.material.textureFilePath);
+            OutputDebugStringA(("Model: Texture loaded - " + modelData_.material.textureFilePath + "\n").c_str());
+        }
+        else {
+            // テクスチャが存在しない場合は警告
+            OutputDebugStringA(("WARNING: Texture file not found - " + modelData_.material.textureFilePath + "\n").c_str());
+            modelData_.material.textureFilePath = ""; // パスをクリア
+        }
+    }
+    else {
+        OutputDebugStringA("Model: No texture specified in MTL file\n");
     }
 
     // 頂点バッファの作成
@@ -40,6 +54,9 @@ void Model::LoadFromObj(const std::string& directoryPath, const std::string& fil
     VertexData* vertexData = nullptr;
     vertexResource_->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
     std::memcpy(vertexData, modelData_.vertices.data(), sizeof(VertexData) * modelData_.vertices.size());
+
+    // デバッグ情報
+    OutputDebugStringA(("Model: Loaded " + std::to_string(modelData_.vertices.size()) + " vertices from " + filename + "\n").c_str());
 }
 
 // UV球などの表示品質を向上させるためのモデルデータ最適化関数
@@ -315,7 +332,13 @@ MaterialData Model::LoadMaterialTemplateFile(const std::string& directoryPath, c
     MaterialData materialData; // 構築するMaterialData
     std::string line; // ファイルから読んだ1行を格納するもの
     std::ifstream file(directoryPath + "/" + filename); // ファイルを開く
-    assert(file.is_open()); // とりあえず開けなっかたら止める
+
+    // ファイルが開けなかった場合は警告を出力して、デフォルト値を返す
+    if (!file.is_open()) {
+        OutputDebugStringA(("WARNING: Failed to open MTL file - " + directoryPath + "/" + filename + "\n").c_str());
+        return materialData;
+    }
+
     while (std::getline(file, line)) {
         std::string identifier;
         std::stringstream s(line);
@@ -328,6 +351,37 @@ MaterialData Model::LoadMaterialTemplateFile(const std::string& directoryPath, c
             // 連結してファイルパスにする
             materialData.textureFilePath = directoryPath + "/" + textureFilename;
         }
+        else if (identifier == "Ka") {
+            // ambient color
+            s >> materialData.ambient.x >> materialData.ambient.y >> materialData.ambient.z;
+            materialData.ambient.w = 1.0f;
+        }
+        else if (identifier == "Kd") {
+            // diffuse color
+            s >> materialData.diffuse.x >> materialData.diffuse.y >> materialData.diffuse.z;
+            materialData.diffuse.w = 1.0f;
+        }
+        else if (identifier == "Ks") {
+            // specular color
+            s >> materialData.specular.x >> materialData.specular.y >> materialData.specular.z;
+            materialData.specular.w = 1.0f;
+        }
+        else if (identifier == "Ns") {
+            // shininess
+            s >> materialData.shininess;
+        }
+        else if (identifier == "d" || identifier == "Tr") {
+            // transparency (d) or transparency inverted (Tr)
+            if (identifier == "d") {
+                s >> materialData.alpha;
+            }
+            else { // Tr (transparency inverted)
+                float tr;
+                s >> tr;
+                materialData.alpha = 1.0f - tr;
+            }
+        }
     }
+
     return materialData;
 }

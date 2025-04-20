@@ -1,5 +1,3 @@
-// GamePlayScene.h
-// ゲームプレイシーンクラス
 #pragma once
 
 #include "IScene.h"

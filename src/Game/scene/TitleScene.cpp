@@ -1,4 +1,3 @@
-// TitleScene.cpp
 #include "TitleScene.h"
 #include "SceneManager.h"
 #include "TextureManager.h"
@@ -29,8 +28,8 @@ void TitleScene::Initialize() {
     // 3Dモデルの初期化
     Initialize3DModels();
 
-    // タイトルロゴスプライトは初期化しない（テクスチャファイルがない可能性があるため）
-    // タイトルロゴの代わりにImGuiでタイトルを表示します
+    // スプライトの初期化
+    InitializeSprites();
 
     // カメラの初期設定
     camera_->SetTranslate({ 0.0f, 0.0f, -10.0f });
@@ -67,6 +66,21 @@ void TitleScene::Initialize3DModels() {
     light.direction = { 0.5f, -1.0f, 0.5f };
     light.intensity = 1.0f;
     sphereObject_->SetDirectionalLight(light);
+}
+
+void TitleScene::InitializeSprites() {
+    // タイトルロゴの初期化（テクスチャがある場合）
+    try {
+        titleLogo_ = std::make_unique<Sprite>();
+        titleLogo_->Initialize(spriteCommon_, "Resources/textures/title_logo.png");
+        titleLogo_->SetPosition({ WinApp::kClientWidth / 2.0f, 200.0f });
+        titleLogo_->SetSize({ 600.0f, 150.0f });
+        titleLogo_->SetAnchorPoint({ 0.5f, 0.5f });
+    }
+    catch (const std::exception& e) {
+        OutputDebugStringA(("Failed to initialize title logo: " + std::string(e.what()) + "\n").c_str());
+        titleLogo_ = nullptr;
+    }
 }
 
 void TitleScene::Update() {

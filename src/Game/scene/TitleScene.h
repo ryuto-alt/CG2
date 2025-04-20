@@ -1,5 +1,3 @@
-// TitleScene.h
-// タイトルシーンクラス
 #pragma once
 
 #include "IScene.h"
@@ -35,6 +33,9 @@ private:
 
     // 3Dモデルの初期化
     void Initialize3DModels();
+
+    // スプライトの初期化
+    void InitializeSprites();
 
     // デバッグ情報描画
     void DrawImGui();

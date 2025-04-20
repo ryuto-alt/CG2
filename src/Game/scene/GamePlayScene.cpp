@@ -1,4 +1,3 @@
-// GamePlayScene.cpp
 #include "GamePlayScene.h"
 #include "SceneManager.h"
 #include "imgui.h"
