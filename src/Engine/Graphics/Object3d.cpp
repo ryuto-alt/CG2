@@ -60,14 +60,21 @@ void Object3d::SetModel(Model* model) {
         // アルファ値も設定
         materialData_->color.w = modelMaterial.alpha;
 
+        // モデルのテクスチャが存在するか確認
+        std::string texturePath = model_->GetTextureFilePath();
+        if (!texturePath.empty() && !TextureManager::GetInstance()->IsTextureExists(texturePath)) {
+            // テクスチャが未ロードなら読み込む
+            TextureManager::GetInstance()->LoadTexture(texturePath);
+        }
+
         // デバッグ情報
-        OutputDebugStringA("Object3d: Applied material from model\n");
+        OutputDebugStringA("Object3d::Draw() called for model\n");
         OutputDebugStringA(("  - Diffuse (RGBA): " +
             std::to_string(materialData_->color.x) + ", " +
             std::to_string(materialData_->color.y) + ", " +
             std::to_string(materialData_->color.z) + ", " +
             std::to_string(materialData_->color.w) + "\n").c_str());
-        OutputDebugStringA(("  - Texture: " + (model_->GetTextureFilePath().empty() ? "None" : model_->GetTextureFilePath()) + "\n").c_str());
+        OutputDebugStringA(("  - Texture: " + (texturePath.empty() ? "None" : texturePath) + "\n").c_str());
     }
 }
 
@@ -136,20 +143,19 @@ void Object3d::Draw() {
     // 変換行列CBufferの場所を設定
     dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, transformationMatrixResource_->GetGPUVirtualAddress());
 
-    // テクスチャの場所を設定
+    // テクスチャの場所を設定（修正部分）
     std::string texturePath = model_->GetTextureFilePath();
-    if (!texturePath.empty()) {
-        // テクスチャが実際に読み込まれているか確認
-        try {
-            // テクスチャが存在する場合のみ処理
-            dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2,
-                TextureManager::GetInstance()->GetSrvHandleGPU(texturePath));
-        }
-        catch (const std::exception&) {
-            // エラー発生時は出力
-            OutputDebugStringA(("ERROR: Failed to set texture - " + texturePath + "\n").c_str());
-        }
+
+    // テクスチャが空または存在しない場合はデフォルトテクスチャを使用
+    if (texturePath.empty() || !TextureManager::GetInstance()->IsTextureExists(texturePath)) {
+        // デフォルトテクスチャを読み込む
+        TextureManager::GetInstance()->LoadDefaultTexture();
+        texturePath = TextureManager::GetInstance()->GetDefaultTexturePath();
     }
+
+    // テクスチャをセット（必ずテクスチャがセットされることを保証）
+    dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(2,
+        TextureManager::GetInstance()->GetSrvHandleGPU(texturePath));
 
     // ライトCBufferの場所を設定
     dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(3, directionalLightResource_->GetGPUVirtualAddress());
@@ -157,8 +163,3 @@ void Object3d::Draw() {
     // 描画
     dxCommon_->GetCommandList()->DrawInstanced(model_->GetVertexCount(), 1, 0, 0);
 }
-
-// 以下のセッター・ゲッターメソッドは既に別の場所で定義されているため、ここでは省略
-// SetPosition, GetPosition, SetRotation, GetRotation, SetScale, GetScale
-// SetColor, GetColor, SetEnableLighting, GetEnableLighting
-// SetDirectionalLight, GetDirectionalLight

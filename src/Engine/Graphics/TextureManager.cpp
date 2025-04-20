@@ -31,7 +31,11 @@ void TextureManager::Initialize(DirectXCommon* dxCommon, SrvManager* srvManager)
 const DirectX::TexMetadata& TextureManager::GetMetaData(const std::string& filePath)
 {
     // ファイルパスをキーに持つテクスチャデータを取得
-    assert(textureDatas.count(filePath) > 0);
+    if (textureDatas.count(filePath) <= 0) {
+        // テクスチャが存在しない場合はデフォルトテクスチャを返す
+        LoadDefaultTexture();
+        return textureDatas[GetDefaultTexturePath()].metadata;
+    }
     return textureDatas[filePath].metadata;
 }
 
@@ -42,57 +46,191 @@ void TextureManager::LoadTexture(const std::string& filePath)
         return; // 読み込み済みなら早期return
     }
 
-    // 最大数チェック
-    assert(!srvManager_->IsMaxCount());
+    // ファイルが存在するか確認
+    DWORD fileAttributes = GetFileAttributesA(filePath.c_str());
+    if (fileAttributes == INVALID_FILE_ATTRIBUTES) {
+        OutputDebugStringA(("WARNING: Texture file not found - " + filePath + "\n").c_str());
+        // デフォルトテクスチャを読み込む
+        LoadDefaultTexture();
+        return;
+    }
 
-    // テクスチャファイルを読んでプログラムで扱えるようにする
-    DirectX::ScratchImage image{};
-    std::wstring filePathW = ConvertString(filePath);
-    HRESULT hr = DirectX::LoadFromWICFile(filePathW.c_str(), DirectX::WIC_FLAGS_FORCE_SRGB, nullptr, image);
-    assert(SUCCEEDED(hr));
+    try {
+        // 最大数チェック
+        assert(!srvManager_->IsMaxCount());
 
-    // ミニマップの作成
-    DirectX::ScratchImage mipImages{};
-    hr = DirectX::GenerateMipMaps(image.GetImages(), image.GetImageCount(), image.GetMetadata(), DirectX::TEX_FILTER_SRGB, 0, mipImages);
-    assert(SUCCEEDED(hr));
+        // テクスチャファイルを読んでプログラムで扱えるようにする
+        DirectX::ScratchImage image{};
+        std::wstring filePathW = ConvertString(filePath);
+        HRESULT hr = DirectX::LoadFromWICFile(filePathW.c_str(), DirectX::WIC_FLAGS_FORCE_SRGB, nullptr, image);
+        if (FAILED(hr)) {
+            throw std::runtime_error("Failed to load texture from file");
+        }
 
-    // テクスチャデータを追加
-    TextureData textureData;
-    textureData.filePath = filePath;
-    textureData.metadata = mipImages.GetMetadata();
-    textureData.resource = dxCommon_->CreateTextureResource(textureData.metadata);
+        // ミニマップの作成
+        DirectX::ScratchImage mipImages{};
+        hr = DirectX::GenerateMipMaps(image.GetImages(), image.GetImageCount(), image.GetMetadata(), DirectX::TEX_FILTER_SRGB, 0, mipImages);
+        if (FAILED(hr)) {
+            throw std::runtime_error("Failed to generate mipmaps");
+        }
 
-    Microsoft::WRL::ComPtr<ID3D12Resource> intermediateResource = dxCommon_->UploadTextureData(textureData.resource, mipImages);
-    dxCommon_->CommandKick();
+        // テクスチャデータを追加
+        TextureData textureData;
+        textureData.filePath = filePath;
+        textureData.metadata = mipImages.GetMetadata();
+        textureData.resource = dxCommon_->CreateTextureResource(textureData.metadata);
 
-    // SRVを作成
-    textureData.srvIndex = srvManager_->Allocate();
-    textureData.srvHandleCPU = srvManager_->GetCPUDescriptorHandle(textureData.srvIndex);
-    textureData.srvHandleGPU = srvManager_->GetGPUDescriptorHandle(textureData.srvIndex);
+        Microsoft::WRL::ComPtr<ID3D12Resource> intermediateResource = dxCommon_->UploadTextureData(textureData.resource, mipImages);
+        dxCommon_->CommandKick();
 
-    // SRVの設定
-    srvManager_->CreateSRVForTexture2D(
-        textureData.srvIndex,
-        textureData.resource,
-        textureData.metadata.format,
-        static_cast<UINT>(textureData.metadata.mipLevels)
-    );
+        // SRVを作成
+        textureData.srvIndex = srvManager_->Allocate();
+        textureData.srvHandleCPU = srvManager_->GetCPUDescriptorHandle(textureData.srvIndex);
+        textureData.srvHandleGPU = srvManager_->GetGPUDescriptorHandle(textureData.srvIndex);
 
-    // マップに追加
-    textureDatas[filePath] = textureData;
+        // SRVの設定
+        srvManager_->CreateSRVForTexture2D(
+            textureData.srvIndex,
+            textureData.resource,
+            textureData.metadata.format,
+            static_cast<UINT>(textureData.metadata.mipLevels)
+        );
+
+        // マップに追加
+        textureDatas[filePath] = textureData;
+
+        OutputDebugStringA(("Texture loaded successfully: " + filePath + "\n").c_str());
+    }
+    catch (const std::exception& e) {
+        OutputDebugStringA(("ERROR: Failed to load texture - " + filePath + " - " + e.what() + "\n").c_str());
+        // エラー時もデフォルトテクスチャを読み込む
+        LoadDefaultTexture();
+    }
+}
+
+void TextureManager::LoadDefaultTexture()
+{
+    const std::string& defaultTexturePath = GetDefaultTexturePath();
+
+    // すでに読み込み済みなら何もしない
+    if (textureDatas.count(defaultTexturePath) > 0) {
+        return;
+    }
+
+    // まずデフォルトテクスチャを実際のファイルから読み込もうとする
+    DWORD fileAttributes = GetFileAttributesA(defaultTexturePath.c_str());
+    if (fileAttributes != INVALID_FILE_ATTRIBUTES) {
+        // ファイルが存在する場合は通常通り読み込む
+        try {
+            DirectX::ScratchImage image{};
+            std::wstring filePathW = ConvertString(defaultTexturePath);
+            HRESULT hr = DirectX::LoadFromWICFile(filePathW.c_str(), DirectX::WIC_FLAGS_FORCE_SRGB, nullptr, image);
+            if (SUCCEEDED(hr)) {
+                // ミニマップの作成
+                DirectX::ScratchImage mipImages{};
+                hr = DirectX::GenerateMipMaps(image.GetImages(), image.GetImageCount(), image.GetMetadata(), DirectX::TEX_FILTER_SRGB, 0, mipImages);
+                if (SUCCEEDED(hr)) {
+                    // テクスチャデータを追加
+                    TextureData textureData;
+                    textureData.filePath = defaultTexturePath;
+                    textureData.metadata = mipImages.GetMetadata();
+                    textureData.resource = dxCommon_->CreateTextureResource(textureData.metadata);
+
+                    Microsoft::WRL::ComPtr<ID3D12Resource> intermediateResource = dxCommon_->UploadTextureData(textureData.resource, mipImages);
+                    dxCommon_->CommandKick();
+
+                    // SRVを作成
+                    textureData.srvIndex = srvManager_->Allocate();
+                    textureData.srvHandleCPU = srvManager_->GetCPUDescriptorHandle(textureData.srvIndex);
+                    textureData.srvHandleGPU = srvManager_->GetGPUDescriptorHandle(textureData.srvIndex);
+
+                    // SRVの設定
+                    srvManager_->CreateSRVForTexture2D(
+                        textureData.srvIndex,
+                        textureData.resource,
+                        textureData.metadata.format,
+                        static_cast<UINT>(textureData.metadata.mipLevels)
+                    );
+
+                    // マップに追加
+                    textureDatas[defaultTexturePath] = textureData;
+
+                    OutputDebugStringA("Default texture loaded from file successfully\n");
+                    return;
+                }
+            }
+        }
+        catch (...) {
+            // エラーが発生した場合は下のコードでメモリ上に白テクスチャを生成する
+        }
+    }
+
+    // ファイルが存在しないか読み込みに失敗した場合は1x1の白テクスチャを動的に生成
+    try {
+        // 1x1の白テクスチャを動的に生成
+        const uint32_t textureWidth = 1;
+        const uint32_t textureHeight = 1;
+        const uint32_t pixelSize = 4; // RGBA
+
+        // 白ピクセルデータ (RGBA: 255, 255, 255, 255)
+        std::vector<uint8_t> pixelData(textureWidth * textureHeight * pixelSize, 255);
+
+        // DirectX::ScratchImageを作成
+        DirectX::ScratchImage image;
+        image.Initialize2D(DXGI_FORMAT_R8G8B8A8_UNORM, textureWidth, textureHeight, 1, 1);
+        memcpy(image.GetPixels(), pixelData.data(), pixelData.size());
+
+        // テクスチャデータを追加
+        TextureData textureData;
+        textureData.filePath = defaultTexturePath;
+        textureData.metadata = image.GetMetadata();
+        textureData.resource = dxCommon_->CreateTextureResource(textureData.metadata);
+
+        // アップロードとSRV作成処理
+        Microsoft::WRL::ComPtr<ID3D12Resource> intermediateResource = dxCommon_->UploadTextureData(textureData.resource, image);
+        dxCommon_->CommandKick();
+
+        // SRVを作成
+        textureData.srvIndex = srvManager_->Allocate();
+        textureData.srvHandleCPU = srvManager_->GetCPUDescriptorHandle(textureData.srvIndex);
+        textureData.srvHandleGPU = srvManager_->GetGPUDescriptorHandle(textureData.srvIndex);
+
+        // SRVの設定
+        srvManager_->CreateSRVForTexture2D(
+            textureData.srvIndex,
+            textureData.resource,
+            textureData.metadata.format,
+            static_cast<UINT>(textureData.metadata.mipLevels)
+        );
+
+        // マップに追加
+        textureDatas[defaultTexturePath] = textureData;
+
+        OutputDebugStringA("Default white texture created in memory successfully\n");
+    }
+    catch (const std::exception& e) {
+        OutputDebugStringA(("ERROR: Failed to create default texture - " + std::string(e.what()) + "\n").c_str());
+    }
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE TextureManager::GetSrvHandleGPU(const std::string& filePath)
 {
     // ファイルパスをキーに持つテクスチャデータを取得
-    assert(textureDatas.count(filePath) > 0);
+    if (textureDatas.count(filePath) <= 0) {
+        // テクスチャが存在しない場合はデフォルトテクスチャを返す
+        LoadDefaultTexture();
+        return textureDatas[GetDefaultTexturePath()].srvHandleGPU;
+    }
     return textureDatas[filePath].srvHandleGPU;
 }
 
-// テクスチャのSRVインデックスを取得（追加）
 uint32_t TextureManager::GetSrvIndex(const std::string& filePath)
 {
     // ファイルパスをキーに持つテクスチャデータを取得
-    assert(textureDatas.count(filePath) > 0);
+    if (textureDatas.count(filePath) <= 0) {
+        // テクスチャが存在しない場合はデフォルトテクスチャを返す
+        LoadDefaultTexture();
+        return textureDatas[GetDefaultTexturePath()].srvIndex;
+    }
     return textureDatas[filePath].srvIndex;
 }

@@ -3,6 +3,7 @@
 #include "imgui.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx12.h"
+#include "TextureManager.h"
 #include <cassert>
 
 GamePlayScene::GamePlayScene() {
@@ -14,112 +15,162 @@ GamePlayScene::~GamePlayScene() {
 }
 
 void GamePlayScene::Initialize() {
-    // リソースのnullチェック
-    assert(dxCommon_);
-    assert(input_);
-    assert(spriteCommon_);
-    assert(srvManager_);
-    assert(camera_);
+    try {
+        // リソースのnullチェック
+        assert(dxCommon_);
+        assert(input_);
+        assert(spriteCommon_);
+        assert(srvManager_);
+        assert(camera_);
 
-    // ImGuiの初期化
-    InitializeImGui();
+        // ImGuiの初期化
+        InitializeImGui();
 
-    // 3Dモデルの初期化
-    Initialize3DModels();
+        // 3Dモデルの初期化
+        Initialize3DModels();
 
-    // カメラの初期設定
-    camera_->SetTranslate({ 0.0f, 0.0f, -10.0f });
+        // カメラの初期設定
+        camera_->SetTranslate({ 0.0f, 0.0f, -50.0f });
 
-    // 初期化完了フラグ
-    initialized_ = true;
+        // 初期化完了フラグ
+        initialized_ = true;
+
+        // デバッグ出力
+        OutputDebugStringA("GamePlayScene: Successfully initialized\n");
+    }
+    catch (const std::exception& e) {
+        OutputDebugStringA(("ERROR: Failed to initialize GamePlayScene: " + std::string(e.what()) + "\n").c_str());
+        throw; // 再スローして、上位の例外ハンドラで処理できるようにする
+    }
 }
 
 void GamePlayScene::InitializeImGui() {
     // ImGuiの設定（必要に応じて）
+    OutputDebugStringA("GamePlayScene: ImGui initialized\n");
 }
 
 void GamePlayScene::Initialize3DModels() {
-    // Axisモデルの初期化
-    axisModel_ = std::make_unique<Model>();
-    axisModel_->Initialize(dxCommon_);
-    axisModel_->LoadFromObj("Resources/models", "sphere.obj");
+    try {
+        // Axisモデルの初期化
+        axisModel_ = std::make_unique<Model>();
+        axisModel_->Initialize(dxCommon_);
+        axisModel_->LoadFromObj("Resources/models", "sphere.obj");
 
-    // 3Dオブジェクトの初期化
-    axisObject_ = std::make_unique<Object3d>();
-    axisObject_->Initialize(dxCommon_, spriteCommon_);
-    axisObject_->SetModel(axisModel_.get());
+        // モデル読み込み後に明示的にテクスチャを確認
+        std::string texturePath = axisModel_->GetTextureFilePath();
+        if (!texturePath.empty() && !TextureManager::GetInstance()->IsTextureExists(texturePath)) {
+            OutputDebugStringA(("GamePlayScene: Loading texture from model: " + texturePath + "\n").c_str());
+            TextureManager::GetInstance()->LoadTexture(texturePath);
+        }
+        else if (texturePath.empty()) {
+            OutputDebugStringA("GamePlayScene: Model has no texture, will use default texture\n");
+        }
 
-    // オブジェクトの初期設定
-    axisObject_->SetScale({ 1.0f, 1.0f, 1.0f });
-    axisObject_->SetPosition({ 0.0f, 0.0f, 0.0f });
+        // 3Dオブジェクトの初期化
+        axisObject_ = std::make_unique<Object3d>();
+        axisObject_->Initialize(dxCommon_, spriteCommon_);
+        axisObject_->SetModel(axisModel_.get());
 
-    // ライティングを有効化
-    axisObject_->SetEnableLighting(true);
+        // オブジェクトの初期設定
+        axisObject_->SetScale({ 0.5f, 0.5f, 0.5f });
+        axisObject_->SetPosition({ 0.0f, 0.0f, 0.0f });
 
-    // ディレクショナルライトの設定
-    DirectionalLight light;
-    light.color = { 1.0f, 1.0f, 1.0f, 1.0f };
-    light.direction = { 0.5f, -1.0f, 0.5f };
-    light.intensity = 1.0f;
-    axisObject_->SetDirectionalLight(light);
+        // ライティングを有効化
+        axisObject_->SetEnableLighting(true);
+
+        // ディレクショナルライトの設定
+        DirectionalLight light;
+        light.color = { 1.0f, 1.0f, 1.0f, 1.0f };
+        light.direction = { 0.5f, -1.0f, 0.5f };
+        light.intensity = 1.0f;
+        axisObject_->SetDirectionalLight(light);
+
+        // デバッグ出力
+        OutputDebugStringA("GamePlayScene: 3D models initialized successfully\n");
+    }
+    catch (const std::exception& e) {
+        OutputDebugStringA(("ERROR in Initialize3DModels: " + std::string(e.what()) + "\n").c_str());
+        throw; // 再スローして、上位の例外ハンドラで処理できるようにする
+    }
 }
 
 void GamePlayScene::Update() {
     // 初期化されていない場合は何もしない
-    if (!initialized_) return;
+    if (!initialized_) {
+        OutputDebugStringA("GamePlayScene: Update called before initialization\n");
+        return;
+    }
 
-    // カメラ制御
-    ControlCamera();
+    try {
+        // カメラ制御
+        ControlCamera();
 
-    // カメラの更新
-    camera_->Update();
+        // カメラの更新
+        camera_->Update();
 
-    // オブジェクトの回転
-    rotationAngle_ += 0.01f;
-    axisObject_->SetRotation({ rotationAngle_, rotationAngle_, rotationAngle_ });
+        // オブジェクトの回転
+        rotationAngle_ += 0.01f;
+        axisObject_->SetRotation({ rotationAngle_, rotationAngle_, rotationAngle_ });
 
-    // 3Dオブジェクトの更新
-    axisObject_->Update();
+        // 3Dオブジェクトの更新
+        axisObject_->Update();
 
-    // ESCキーでタイトルシーンへ戻る
-    if (input_->TriggerKey(DIK_ESCAPE)) {
-        sceneManager_->ChangeScene("Title");
+        // ESCキーでタイトルシーンへ戻る
+        if (input_->TriggerKey(DIK_ESCAPE)) {
+            sceneManager_->ChangeScene("Title");
+        }
+    }
+    catch (const std::exception& e) {
+        OutputDebugStringA(("ERROR in GamePlayScene::Update: " + std::string(e.what()) + "\n").c_str());
     }
 }
 
 void GamePlayScene::Draw() {
     // 初期化されていない場合は何もしない
-    if (!initialized_) return;
+    if (!initialized_) {
+        OutputDebugStringA("GamePlayScene: Draw called before initialization\n");
+        return;
+    }
 
-    // 3Dオブジェクトの描画準備（SRVヒープの設定）
-    srvManager_->PreDraw();
+    try {
+        // 3Dオブジェクトの描画準備（SRVヒープの設定）
+        srvManager_->PreDraw();
 
-    // 3Dオブジェクトの描画
-    axisObject_->Draw();
+        // 3Dオブジェクトの描画
+        axisObject_->Draw();
 
-    // ImGuiの描画
-    DrawImGui();
+        // ImGuiの描画
+        DrawImGui();
+    }
+    catch (const std::exception& e) {
+        OutputDebugStringA(("ERROR in GamePlayScene::Draw: " + std::string(e.what()) + "\n").c_str());
+    }
 }
 
 void GamePlayScene::DrawImGui() {
-    // ImGuiの新しいフレーム開始
-    ImGui_ImplDX12_NewFrame();
-    ImGui_ImplWin32_NewFrame();
-    ImGui::NewFrame();
+    try {
+        // ImGuiの新しいフレーム開始
+        ImGui_ImplDX12_NewFrame();
+        ImGui_ImplWin32_NewFrame();
+        ImGui::NewFrame();
 
-    // ImGuiウィンドウ
-    ImGui::Begin("GamePlayScene");
-    ImGui::Text("Press ESC key to return to title");
-    ImGui::Text("Camera Position: %.2f, %.2f, %.2f",
-        camera_->GetTranslate().x,
-        camera_->GetTranslate().y,
-        camera_->GetTranslate().z);
-    ImGui::Text("Rotation Angle: %.2f", rotationAngle_);
-    ImGui::End();
+        // ImGuiウィンドウ
+        ImGui::Begin("GamePlayScene");
+        ImGui::Text("Press ESC key to return to title");
+        ImGui::Text("Camera Position: %.2f, %.2f, %.2f",
+            camera_->GetTranslate().x,
+            camera_->GetTranslate().y,
+            camera_->GetTranslate().z);
+        ImGui::Text("Rotation Angle: %.2f", rotationAngle_);
+        ImGui::End();
 
-    // ImGuiの描画
-    ImGui::Render();
-    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), dxCommon_->GetCommandList());
+        // ImGuiの描画
+        ImGui::Render();
+        ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), dxCommon_->GetCommandList());
+    }
+    catch (const std::exception& e) {
+        OutputDebugStringA(("ERROR in DrawImGui: " + std::string(e.what()) + "\n").c_str());
+    }
 }
 
 void GamePlayScene::ControlCamera() {
@@ -149,7 +200,15 @@ void GamePlayScene::ControlCamera() {
 }
 
 void GamePlayScene::Finalize() {
-    // リソースの解放（必要に応じて）
-    axisObject_.reset();
-    axisModel_.reset();
+    try {
+        // リソースの解放（必要に応じて）
+        axisObject_.reset();
+        axisModel_.reset();
+
+        // デバッグ出力
+        OutputDebugStringA("GamePlayScene: Successfully finalized\n");
+    }
+    catch (const std::exception& e) {
+        OutputDebugStringA(("ERROR in GamePlayScene::Finalize: " + std::string(e.what()) + "\n").c_str());
+    }
 }

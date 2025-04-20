@@ -49,6 +49,20 @@ public:
     // テクスチャのSRVインデックスを取得（追加）
     uint32_t GetSrvIndex(const std::string& filePath);
 
+    // テクスチャが存在するかチェック（新規追加）
+    bool IsTextureExists(const std::string& filePath) const {
+        return textureDatas.find(filePath) != textureDatas.end();
+    }
+
+    // デフォルトテクスチャを読み込む（新規追加）
+    void LoadDefaultTexture();
+
+    // デフォルトテクスチャのパスを取得（新規追加）
+    const std::string& GetDefaultTexturePath() const {
+        static const std::string defaultTexturePath = "Resources/textures/default_white.png";
+        return defaultTexturePath;
+    }
+
 private:
     // テクスチャデータ
     std::unordered_map<std::string, TextureData> textureDatas;

@@ -1,4 +1,3 @@
-// MyGame.cpp
 #include "MyGame.h"
 #include "D3DResourceCheck.h"
 #include <string>
@@ -21,131 +20,181 @@ MyGame::~MyGame() {
 }
 
 void MyGame::Initialize() {
-    // WinAppが設定されていることを確認
-    assert(winApp_ != nullptr);
+    try {
+        // WinAppが設定されていることを確認
+        assert(winApp_ != nullptr);
 
-    // DirectXCommonの初期化
-    dxCommon_ = new DirectXCommon();
-    dxCommon_->Initialize(winApp_);
+        // DirectXCommonの初期化
+        dxCommon_ = new DirectXCommon();
+        dxCommon_->Initialize(winApp_);
 
-    // SRVマネージャの初期化
-    srvManager_ = new SrvManager();
-    srvManager_->Initialize(dxCommon_);
+        // SRVマネージャの初期化
+        srvManager_ = new SrvManager();
+        srvManager_->Initialize(dxCommon_);
 
-    // テクスチャマネージャの初期化
-    TextureManager::GetInstance()->Initialize(dxCommon_, srvManager_);
+        // ここで明示的にPreDrawを呼び出し、ディスクリプタヒープを設定
+        srvManager_->PreDraw();
 
-    // ImGuiの初期化
-    InitializeImGui();
+        // テクスチャマネージャの初期化
+        TextureManager::GetInstance()->Initialize(dxCommon_, srvManager_);
 
-    // 入力初期化
-    input_ = new Input();
-    input_->Initialize(winApp_);
+        // デフォルトテクスチャの事前読み込み
+        TextureManager::GetInstance()->LoadDefaultTexture();
 
-    // スプライト共通部分の初期化
-    spriteCommon_ = new SpriteCommon();
-    spriteCommon_->Initialize(dxCommon_);
+        // ImGuiの初期化
+        InitializeImGui();
 
-    // カメラの作成と初期化
-    camera_ = new Camera();
-    camera_->SetTranslate({ 0.0f, 0.0f, -5.0f });
-    Object3dCommon::SetDefaultCamera(camera_);
+        // 入力初期化
+        input_ = new Input();
+        input_->Initialize(winApp_);
 
-    // パーティクルマネージャの初期化
-    ParticleManager::GetInstance()->Initialize(dxCommon_, srvManager_);
+        // スプライト共通部分の初期化
+        spriteCommon_ = new SpriteCommon();
+        spriteCommon_->Initialize(dxCommon_);
 
-    // 基本的なパーティクルグループの作成
-    ParticleManager::GetInstance()->CreateParticleGroup("smoke", "Resources/particle/smoke.png");
+        // カメラの作成と初期化
+        camera_ = new Camera();
+        camera_->SetTranslate({ 0.0f, 0.0f, -5.0f });
+        Object3dCommon::SetDefaultCamera(camera_);
 
-    // シーンファクトリーの作成
-    sceneFactory_ = new GameSceneFactory();
+        // パーティクルマネージャの初期化
+        ParticleManager::GetInstance()->Initialize(dxCommon_, srvManager_);
 
-    // シーンマネージャーの作成と初期化
-    sceneManager_ = SceneManager::GetInstance();
-    sceneManager_->SetDirectXCommon(dxCommon_);
-    sceneManager_->SetInput(input_);
-    sceneManager_->SetSpriteCommon(spriteCommon_);
-    sceneManager_->SetSrvManager(srvManager_);
-    sceneManager_->SetCamera(camera_);
-    sceneManager_->SetWinApp(winApp_);
-    sceneManager_->Initialize(sceneFactory_);
+        // 基本的なパーティクルグループの作成
+        ParticleManager::GetInstance()->CreateParticleGroup("smoke", "Resources/particle/smoke.png");
+
+        // シーンファクトリーの作成
+        sceneFactory_ = new GameSceneFactory();
+
+        // シーンマネージャーの作成と初期化
+        sceneManager_ = SceneManager::GetInstance();
+        sceneManager_->SetDirectXCommon(dxCommon_);
+        sceneManager_->SetInput(input_);
+        sceneManager_->SetSpriteCommon(spriteCommon_);
+        sceneManager_->SetSrvManager(srvManager_);
+        sceneManager_->SetCamera(camera_);
+        sceneManager_->SetWinApp(winApp_);
+        sceneManager_->Initialize(sceneFactory_);
+
+        // デバッグ出力
+        OutputDebugStringA("MyGame: Successfully initialized\n");
+    }
+    catch (const std::exception& e) {
+        OutputDebugStringA(("ERROR: Exception in MyGame::Initialize: " + std::string(e.what()) + "\n").c_str());
+    }
 }
 
 void MyGame::InitializeImGui() {
-    // ImGui初期化
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGui::StyleColorsDark();
-    ImGui_ImplWin32_Init(winApp_->GetHwnd());
+    try {
+        // ImGui初期化
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGui::StyleColorsDark();
+        ImGui_ImplWin32_Init(winApp_->GetHwnd());
 
-    // SrvManagerのディスクリプタヒープを使用
-    ImGui_ImplDX12_Init(
-        dxCommon_->GetDevice(),
-        2, // SwapChainのバッファ数
-        DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
-        srvManager_->GetDescriptorHeap().Get(),
-        srvManager_->GetCPUDescriptorHandle(0), // ImGui用に0番を使用
-        srvManager_->GetGPUDescriptorHandle(0)
-    );
+        // SrvManagerのディスクリプタヒープを使用
+        ImGui_ImplDX12_Init(
+            dxCommon_->GetDevice(),
+            2, // SwapChainのバッファ数
+            DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+            srvManager_->GetDescriptorHeap().Get(),
+            srvManager_->GetCPUDescriptorHandle(0), // ImGui用に0番を使用
+            srvManager_->GetGPUDescriptorHandle(0)
+        );
+
+        // デバッグ出力
+        OutputDebugStringA("MyGame: ImGui initialized successfully\n");
+    }
+    catch (const std::exception& e) {
+        OutputDebugStringA(("ERROR: Failed to initialize ImGui: " + std::string(e.what()) + "\n").c_str());
+    }
 }
 
 void MyGame::Update() {
-    // Windowsのメッセージ処理
-    if (winApp_->ProcessMessage()) {
-        endRequest_ = true;
-        return;
+    try {
+        // Windowsのメッセージ処理
+        if (winApp_->ProcessMessage()) {
+            endRequest_ = true;
+            return;
+        }
+
+        // 入力更新
+        input_->Update();
+
+        // SRVヒープを描画前に明示的に設定
+        if (srvManager_) {
+            srvManager_->PreDraw();
+        }
+
+        // パーティクルマネージャの更新
+        ParticleManager::GetInstance()->Update(camera_);
+
+        // シーンマネージャーの更新
+        sceneManager_->Update();
     }
-
-    // 入力更新
-    input_->Update();
-
-    // パーティクルマネージャの更新
-    ParticleManager::GetInstance()->Update(camera_);
-
-    // シーンマネージャーの更新
-    sceneManager_->Update();
+    catch (const std::exception& e) {
+        OutputDebugStringA(("ERROR: Exception in MyGame::Update: " + std::string(e.what()) + "\n").c_str());
+    }
 }
 
 void MyGame::Draw() {
-    // DirectXの描画準備
-    dxCommon_->Begin();
+    try {
+        // DirectXの描画準備
+        dxCommon_->Begin();
 
-    // シーンマネージャーの描画
-    sceneManager_->Draw();
+        // SRVヒープを描画前に明示的に設定
+        if (srvManager_) {
+            srvManager_->PreDraw();
+        }
 
-    // パーティクルの描画
-    ParticleManager::GetInstance()->Draw();
+        // シーンマネージャーの描画
+        sceneManager_->Draw();
 
-    // 描画終了
-    dxCommon_->End();
+        // パーティクルの描画
+        ParticleManager::GetInstance()->Draw();
+
+        // 描画終了
+        dxCommon_->End();
+    }
+    catch (const std::exception& e) {
+        OutputDebugStringA(("ERROR: Exception in MyGame::Draw: " + std::string(e.what()) + "\n").c_str());
+    }
 }
 
 void MyGame::Finalize() {
-    // シーンマネージャーの終了処理
-    sceneManager_->Finalize();
+    try {
+        // シーンマネージャーの終了処理
+        sceneManager_->Finalize();
 
-    // パーティクルマネージャーの終了処理
-    ParticleManager::GetInstance()->Finalize();
+        // パーティクルマネージャーの終了処理
+        ParticleManager::GetInstance()->Finalize();
 
-    // シーンファクトリーの解放
-    delete sceneFactory_;
+        // シーンファクトリーの解放
+        delete sceneFactory_;
 
-    // ImGuiの解放
-    ImGui_ImplDX12_Shutdown();
-    ImGui_ImplWin32_Shutdown();
-    ImGui::DestroyContext();
+        // ImGuiの解放
+        ImGui_ImplDX12_Shutdown();
+        ImGui_ImplWin32_Shutdown();
+        ImGui::DestroyContext();
 
-    // テクスチャマネージャの解放
-    TextureManager::GetInstance()->Finalize();
+        // テクスチャマネージャの解放
+        TextureManager::GetInstance()->Finalize();
 
-    // カメラの解放
-    delete camera_;
+        // カメラの解放
+        delete camera_;
 
-    // リソースの解放
-    delete spriteCommon_;
-    delete input_;
-    delete srvManager_;
-    delete dxCommon_;
+        // リソースの解放
+        delete spriteCommon_;
+        delete input_;
+        delete srvManager_;
+        delete dxCommon_;
 
-    // winAppはmain.cppで解放するため、ここでは解放しない
+        // winAppはmain.cppで解放するため、ここでは解放しない
+
+        // デバッグ出力
+        OutputDebugStringA("MyGame: Successfully finalized\n");
+    }
+    catch (const std::exception& e) {
+        OutputDebugStringA(("ERROR: Exception in MyGame::Finalize: " + std::string(e.what()) + "\n").c_str());
+    }
 }

@@ -20,6 +20,9 @@ void SrvManager::Initialize(DirectXCommon* dxCommon) {
 
     // ImGuiなどのシステム用に最初のいくつかのインデックスを予約
     useIndex_ = 1; // 0番は予約済みとする
+
+    // デバッグ出力
+    OutputDebugStringA("SrvManager initialized successfully\n");
 }
 
 uint32_t SrvManager::Allocate() {
@@ -29,6 +32,9 @@ uint32_t SrvManager::Allocate() {
     // インデックスを確保してから加算
     uint32_t index = useIndex_;
     useIndex_++;
+
+    // デバッグ出力
+    OutputDebugStringA(("SrvManager: Allocated index " + std::to_string(index) + "\n").c_str());
 
     // 確保したインデックスを返す
     return index;
@@ -47,6 +53,12 @@ D3D12_GPU_DESCRIPTOR_HANDLE SrvManager::GetGPUDescriptorHandle(uint32_t index) {
 }
 
 void SrvManager::CreateSRVForTexture2D(uint32_t srvIndex, Microsoft::WRL::ComPtr<ID3D12Resource> pResource, DXGI_FORMAT format, UINT mipLevels) {
+    // nullptrチェック
+    if (pResource == nullptr) {
+        OutputDebugStringA("WARNING: Trying to create SRV for nullptr resource\n");
+        return;
+    }
+
     // SRVの設定
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
     srvDesc.Format = format;
@@ -60,9 +72,18 @@ void SrvManager::CreateSRVForTexture2D(uint32_t srvIndex, Microsoft::WRL::ComPtr
         &srvDesc,
         GetCPUDescriptorHandle(srvIndex)
     );
+
+    // デバッグ出力
+    OutputDebugStringA(("SrvManager: Created SRV for Texture2D at index " + std::to_string(srvIndex) + "\n").c_str());
 }
 
 void SrvManager::CreateSRVForStructuredBuffer(uint32_t srvIndex, Microsoft::WRL::ComPtr<ID3D12Resource> pResource, UINT numElements, UINT structureByteStride) {
+    // nullptrチェック
+    if (pResource == nullptr) {
+        OutputDebugStringA("WARNING: Trying to create SRV for nullptr resource\n");
+        return;
+    }
+
     // SRVの設定
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
     srvDesc.Format = DXGI_FORMAT_UNKNOWN;
@@ -79,20 +100,41 @@ void SrvManager::CreateSRVForStructuredBuffer(uint32_t srvIndex, Microsoft::WRL:
         &srvDesc,
         GetCPUDescriptorHandle(srvIndex)
     );
+
+    // デバッグ出力
+    OutputDebugStringA(("SrvManager: Created SRV for StructuredBuffer at index " + std::to_string(srvIndex) + "\n").c_str());
 }
 
 void SrvManager::PreDraw() {
+    // nullptrチェック
+    if (!descriptorHeap) {
+        OutputDebugStringA("ERROR: SrvManager::PreDraw called with null descriptorHeap\n");
+        return;
+    }
+
     // 描画用のDescriptorHeapの設定
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> descriptorHeaps[] = { descriptorHeap };
-    dxCommon_->GetCommandList()->SetDescriptorHeaps(1, descriptorHeaps->GetAddressOf());
+    ID3D12DescriptorHeap* heaps[] = { descriptorHeap.Get() };
+    dxCommon_->GetCommandList()->SetDescriptorHeaps(1, heaps);
+
+    // デバッグ出力 (頻繁に呼ばれるので無効化)
+    // OutputDebugStringA("SrvManager: Set descriptor heap for drawing\n");
 }
 
 void SrvManager::SetGraphicsRootDescriptorTable(UINT rootParameterIndex, uint32_t srvIndex) {
+    // インデックスの範囲チェック
+    if (srvIndex >= kMaxSRVCount) {
+        OutputDebugStringA(("ERROR: SrvManager::SetGraphicsRootDescriptorTable called with invalid index: " + std::to_string(srvIndex) + "\n").c_str());
+        return;
+    }
+
     // SRVのGPUハンドルを取得
     D3D12_GPU_DESCRIPTOR_HANDLE handleGPU = GetGPUDescriptorHandle(srvIndex);
 
     // ルートパラメータにSRVをセット
     dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(rootParameterIndex, handleGPU);
+
+    // デバッグ出力 (頻繁に呼ばれるので無効化)
+    // OutputDebugStringA(("SrvManager: Set SRV index " + std::to_string(srvIndex) + " to root parameter " + std::to_string(rootParameterIndex) + "\n").c_str());
 }
 
 bool SrvManager::IsMaxCount() {
