@@ -41,7 +41,8 @@ public:
     const DirectX::TexMetadata& GetMetaData(const std::string& filePath);
 
     // テクスチャファイルの読み込み
-    void LoadTexture(const std::string& filePath);
+    // bool型の戻り値に変更（成功/失敗を返すため）
+    bool LoadTexture(const std::string& filePath);
 
     // テクスチャ番号からCPUハンドルを取得
     D3D12_GPU_DESCRIPTOR_HANDLE GetSrvHandleGPU(const std::string& filePath);

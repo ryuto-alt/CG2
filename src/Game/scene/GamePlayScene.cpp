@@ -32,6 +32,9 @@ void GamePlayScene::Initialize() {
         // カメラの初期設定
         camera_->SetTranslate({ 0.0f, 0.0f, -50.0f });
 
+        // 回転角度の初期化
+        yRotationAngle_ = 0.0f; // Y軸回転用の変数を初期化
+
         // 初期化完了フラグ
         initialized_ = true;
 
@@ -54,7 +57,7 @@ void GamePlayScene::Initialize3DModels() {
         // Axisモデルの初期化
         axisModel_ = std::make_unique<Model>();
         axisModel_->Initialize(dxCommon_);
-        axisModel_->LoadFromObj("Resources/models", "sphere.obj");
+        axisModel_->LoadFromObj("Resources/models", "dragon.obj");
 
         // モデル読み込み後に明示的にテクスチャを確認
         std::string texturePath = axisModel_->GetTextureFilePath();
@@ -108,9 +111,16 @@ void GamePlayScene::Update() {
         // カメラの更新
         camera_->Update();
 
-        // オブジェクトの回転
-        rotationAngle_ += 0.01f;
-        axisObject_->SetRotation({ rotationAngle_, rotationAngle_, rotationAngle_ });
+        // Y軸（横方向）回転の計算 - 毎フレーム回転角度を増加
+        yRotationAngle_ += 0.02f; // 回転スピード調整
+
+        // 角度が2πを超えたら0に戻す（オプション）
+        if (yRotationAngle_ > 6.28f) {
+            yRotationAngle_ -= 6.28f;
+        }
+
+        // モデルのY軸回転を設定
+        axisObject_->SetRotation({ 0.0f, yRotationAngle_, 0.0f });
 
         // 3Dオブジェクトの更新
         axisObject_->Update();
@@ -161,7 +171,7 @@ void GamePlayScene::DrawImGui() {
             camera_->GetTranslate().x,
             camera_->GetTranslate().y,
             camera_->GetTranslate().z);
-        ImGui::Text("Rotation Angle: %.2f", rotationAngle_);
+        ImGui::Text("Y Rotation Angle: %.2f", yRotationAngle_);
         ImGui::End();
 
         // ImGuiの描画

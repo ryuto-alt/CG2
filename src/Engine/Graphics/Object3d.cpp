@@ -1,3 +1,4 @@
+// src/Engine/Graphics/Object3d.cpp
 #include "Object3d.h"
 #include "DirectXCommon.h"
 #include "SpriteCommon.h"
@@ -60,15 +61,26 @@ void Object3d::SetModel(Model* model) {
         // アルファ値も設定
         materialData_->color.w = modelMaterial.alpha;
 
-        // モデルのテクスチャが存在するか確認
+        // モデルのテクスチャパスの確認
         std::string texturePath = model_->GetTextureFilePath();
-        if (!texturePath.empty() && !TextureManager::GetInstance()->IsTextureExists(texturePath)) {
+        OutputDebugStringA(("Object3d::SetModel - Model texture path: " + texturePath + "\n").c_str());
+
+        if (!texturePath.empty()) {
             // テクスチャが未ロードなら読み込む
-            TextureManager::GetInstance()->LoadTexture(texturePath);
+            if (!TextureManager::GetInstance()->IsTextureExists(texturePath)) {
+                OutputDebugStringA(("Object3d::SetModel - Loading texture: " + texturePath + "\n").c_str());
+                TextureManager::GetInstance()->LoadTexture(texturePath);
+            }
+            else {
+                OutputDebugStringA(("Object3d::SetModel - Texture already loaded: " + texturePath + "\n").c_str());
+            }
+        }
+        else {
+            OutputDebugStringA("Object3d::SetModel - No texture path provided by model\n");
         }
 
         // デバッグ情報
-        OutputDebugStringA("Object3d::Draw() called for model\n");
+        OutputDebugStringA("Object3d::SetModel - Material information:\n");
         OutputDebugStringA(("  - Diffuse (RGBA): " +
             std::to_string(materialData_->color.x) + ", " +
             std::to_string(materialData_->color.y) + ", " +
@@ -143,14 +155,45 @@ void Object3d::Draw() {
     // 変換行列CBufferの場所を設定
     dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, transformationMatrixResource_->GetGPUVirtualAddress());
 
-    // テクスチャの場所を設定（修正部分）
+    // テクスチャの場所を設定
     std::string texturePath = model_->GetTextureFilePath();
+    OutputDebugStringA(("Object3d::Draw - Using texture path: " + texturePath + "\n").c_str());
 
-    // テクスチャが空または存在しない場合はデフォルトテクスチャを使用
-    if (texturePath.empty() || !TextureManager::GetInstance()->IsTextureExists(texturePath)) {
-        // デフォルトテクスチャを読み込む
+    // テクスチャが空または存在しない場合の詳細なチェック
+    if (texturePath.empty()) {
+        OutputDebugStringA("Object3d::Draw - Texture path is empty, using default texture\n");
         TextureManager::GetInstance()->LoadDefaultTexture();
         texturePath = TextureManager::GetInstance()->GetDefaultTexturePath();
+    }
+    else if (!TextureManager::GetInstance()->IsTextureExists(texturePath)) {
+        OutputDebugStringA(("Object3d::Draw - Texture does not exist in TextureManager: " + texturePath + "\n").c_str());
+
+        // 試しにテクスチャを再ロードする
+        bool loadSuccess = false;
+
+        // ファイルの存在チェック
+        DWORD fileAttributes = GetFileAttributesA(texturePath.c_str());
+        if (fileAttributes != INVALID_FILE_ATTRIBUTES) {
+            // ファイルが存在する場合はロードを試みる
+            OutputDebugStringA(("Object3d::Draw - File exists, trying to load texture: " + texturePath + "\n").c_str());
+            TextureManager::GetInstance()->LoadTexture(texturePath);
+
+            // 読み込みに成功したか確認
+            if (TextureManager::GetInstance()->IsTextureExists(texturePath)) {
+                OutputDebugStringA(("Object3d::Draw - Successfully loaded texture: " + texturePath + "\n").c_str());
+                loadSuccess = true;
+            }
+        }
+
+        // それでも失敗した場合はデフォルトテクスチャを使用
+        if (!loadSuccess) {
+            OutputDebugStringA("Object3d::Draw - Using default texture\n");
+            TextureManager::GetInstance()->LoadDefaultTexture();
+            texturePath = TextureManager::GetInstance()->GetDefaultTexturePath();
+        }
+    }
+    else {
+        OutputDebugStringA(("Object3d::Draw - Using valid texture: " + texturePath + "\n").c_str());
     }
 
     // テクスチャをセット（必ずテクスチャがセットされることを保証）

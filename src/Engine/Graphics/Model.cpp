@@ -1,3 +1,4 @@
+// src/Engine/Graphics/Model.cpp
 #include "Model.h"
 #include "TextureManager.h"
 #include <fstream>
@@ -25,6 +26,9 @@ void Model::LoadFromObj(const std::string& directoryPath, const std::string& fil
 
     // テクスチャの読み込み
     if (!modelData_.material.textureFilePath.empty()) {
+        // テクスチャパスをログに出力
+        OutputDebugStringA(("Model: Texture path from MTL: " + modelData_.material.textureFilePath + "\n").c_str());
+
         // テクスチャが存在するかチェック
         DWORD fileAttributes = GetFileAttributesA(modelData_.material.textureFilePath.c_str());
         if (fileAttributes != INVALID_FILE_ATTRIBUTES) {
@@ -33,9 +37,42 @@ void Model::LoadFromObj(const std::string& directoryPath, const std::string& fil
             OutputDebugStringA(("Model: Texture loaded - " + modelData_.material.textureFilePath + "\n").c_str());
         }
         else {
-            // テクスチャが存在しない場合は警告
-            OutputDebugStringA(("WARNING: Texture file not found - " + modelData_.material.textureFilePath + "\n").c_str());
-            modelData_.material.textureFilePath = ""; // パスをクリア
+            // テクスチャが見つからない場合、別の場所を探す
+            OutputDebugStringA(("WARNING: Texture file not found at: " + modelData_.material.textureFilePath + "\n").c_str());
+
+            // ファイル名のみを抽出
+            std::string filenameOnly = modelData_.material.textureFilePath;
+            size_t lastSlash = filenameOnly.find_last_of("/\\");
+            if (lastSlash != std::string::npos) {
+                filenameOnly = filenameOnly.substr(lastSlash + 1);
+            }
+
+            // 複数の可能性のある場所を探索
+            std::vector<std::string> possiblePaths = {
+                "Resources/textures/" + filenameOnly,
+                directoryPath + "/" + filenameOnly,
+                "Resources/" + filenameOnly,
+                "Resources/models/" + filenameOnly
+            };
+
+            bool found = false;
+            for (const auto& path : possiblePaths) {
+                OutputDebugStringA(("Model: Trying alternative path: " + path + "\n").c_str());
+                if (GetFileAttributesA(path.c_str()) != INVALID_FILE_ATTRIBUTES) {
+                    // 見つかった場合はパスを更新して読み込み
+                    modelData_.material.textureFilePath = path;
+                    TextureManager::GetInstance()->LoadTexture(path);
+                    OutputDebugStringA(("Model: Texture found and loaded from: " + path + "\n").c_str());
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                // どこにも見つからない場合
+                OutputDebugStringA("WARNING: Texture file not found in any location. Clearing texture path.\n");
+                modelData_.material.textureFilePath = ""; // パスをクリア
+            }
         }
     }
     else {
@@ -267,6 +304,8 @@ ModelData Model::LoadObjFile(const std::string& directoryPath, const std::string
     std::ifstream file(directoryPath + "/" + filename); // fileを開く
     assert(file.is_open()); // 開けなかったら止める
 
+    OutputDebugStringA(("Model: Loading OBJ file: " + directoryPath + "/" + filename + "\n").c_str());
+
     while (std::getline(file, line)) {
         std::string identifier;
         std::istringstream s(line);
@@ -321,6 +360,10 @@ ModelData Model::LoadObjFile(const std::string& directoryPath, const std::string
             // materialTemplateLibraryファイルの名前を取得する
             std::string materialFilename;
             s >> materialFilename;
+
+            // MTLファイル名をログに出力
+            OutputDebugStringA(("Model: Found MTL reference: " + materialFilename + "\n").c_str());
+
             // 基本的にobjファイルと同一階層にmtlは存在させるので、ディレクトリ名とファイル名を渡す
             modelData.material = LoadMaterialTemplateFile(directoryPath, materialFilename);
         }
@@ -331,13 +374,18 @@ ModelData Model::LoadObjFile(const std::string& directoryPath, const std::string
 MaterialData Model::LoadMaterialTemplateFile(const std::string& directoryPath, const std::string& filename) {
     MaterialData materialData; // 構築するMaterialData
     std::string line; // ファイルから読んだ1行を格納するもの
-    std::ifstream file(directoryPath + "/" + filename); // ファイルを開く
+
+    // ファイルのフルパス
+    std::string mtlPath = directoryPath + "/" + filename;
+    std::ifstream file(mtlPath); // ファイルを開く
 
     // ファイルが開けなかった場合は警告を出力して、デフォルト値を返す
     if (!file.is_open()) {
-        OutputDebugStringA(("WARNING: Failed to open MTL file - " + directoryPath + "/" + filename + "\n").c_str());
+        OutputDebugStringA(("WARNING: Failed to open MTL file - " + mtlPath + "\n").c_str());
         return materialData;
     }
+
+    OutputDebugStringA(("Model: Successfully opened MTL file - " + mtlPath + "\n").c_str());
 
     while (std::getline(file, line)) {
         std::string identifier;
@@ -348,8 +396,15 @@ MaterialData Model::LoadMaterialTemplateFile(const std::string& directoryPath, c
         if (identifier == "map_Kd") {
             std::string textureFilename;
             s >> textureFilename;
+
+            // テクスチャファイル名をログに出力
+            OutputDebugStringA(("MTL Parser: Found texture reference: " + textureFilename + "\n").c_str());
+
             // 連結してファイルパスにする
             materialData.textureFilePath = directoryPath + "/" + textureFilename;
+
+            // フルパスをログに出力
+            OutputDebugStringA(("MTL Parser: Full texture path constructed: " + materialData.textureFilePath + "\n").c_str());
         }
         else if (identifier == "Ka") {
             // ambient color

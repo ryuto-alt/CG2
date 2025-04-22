@@ -43,4 +43,5 @@ private:
 
     // 回転角度
     float rotationAngle_ = 0.0f;
+    float yRotationAngle_ = 0.0f; // Y軸（横方向）回転用の変数を追加
 };
