@@ -1,3 +1,4 @@
+// MyGame.cpp（修正版）
 #include "MyGame.h"
 #include "D3DResourceCheck.h"
 #include <string>
@@ -61,7 +62,9 @@ void MyGame::Initialize() {
         ParticleManager::GetInstance()->Initialize(dxCommon_, srvManager_);
 
         // 基本的なパーティクルグループの作成
-        ParticleManager::GetInstance()->CreateParticleGroup("smoke", "Resources/particle/smoke.png");
+        ParticleManager::GetInstance()->CreateParticleGroup("smoke", "Resources/textures/smoke.png");
+        ParticleManager::GetInstance()->CreateParticleGroup("goal_particle", "Resources/textures/star.png");
+        ParticleManager::GetInstance()->CreateParticleGroup("jump_particle", "Resources/textures/particle.png");
 
         // シーンファクトリーの作成
         sceneFactory_ = new GameSceneFactory();
@@ -75,6 +78,9 @@ void MyGame::Initialize() {
         sceneManager_->SetCamera(camera_);
         sceneManager_->SetWinApp(winApp_);
         sceneManager_->Initialize(sceneFactory_);
+
+        // 最初のシーンをアスレチックゲームに設定
+        sceneManager_->ChangeScene("Athletic");
 
         // デバッグ出力
         OutputDebugStringA("MyGame: Successfully initialized\n");
