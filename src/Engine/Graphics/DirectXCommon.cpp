@@ -326,7 +326,7 @@ void DirectXCommon::End()
 	swapChain->Present(1, 0);
 	//Fenceの値の更新
 	fenceValue++;
-	//GPUがここまでたどりついた時に、Fenceの値を指定したあたいに代入するようにsignalを送る
+	//GPUがここまでたどりついた時に、Fenceの値を指定したあたいにC:\Program Files\Blender Foundation\Blender 4.4\4.4\scripts\addons_core\level_editor.py代入するようにsignalを送る
 	commandQueue->Signal(fence.Get(), fenceValue);
 	//Fenceの値が指定したSignal値にたどり着いているか確認する
 		//GetCompletebValueの初期値はFence作成時に渡した初期値
@@ -392,9 +392,9 @@ void DirectXCommon::InitializeFixFPS()
 void DirectXCommon::UpdateFixFPS()
 {
 	//1/60秒ピッタリの時間
-	const std::chrono::microseconds kMinTime(uint64_t(1000000.0f / 120.0f));
+	const std::chrono::microseconds kMinTime(uint64_t(1000000.0f / 240.0f));
 	//1/60秒よりわずかに短い時間
-	const std::chrono::microseconds kMInCheckTime(uint64_t(1000000.0f / 120.0f));
+	const std::chrono::microseconds kMInCheckTime(uint64_t(1000000.0f / 240.0f));
 	//現在時間を取得する
 	std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
 	//前回記録からの経過時間を取得する
