@@ -1,4 +1,3 @@
-// MyGame.h（修正版）
 #pragma once
 
 #include "Framework.h"
@@ -14,6 +13,8 @@
 #include "imgui.h"
 #include "imgui_impl_dx12.h"
 #include "imgui_impl_win32.h"
+
+#include <memory> // unique_ptrを使用するために必要
 
 // ゲーム全体を管理するクラス
 class MyGame : public Framework {
@@ -41,13 +42,15 @@ private:
 private:
     // 基本システム
     WinApp* winApp_;
-    DirectXCommon* dxCommon_;
-    Input* input_;
-    SpriteCommon* spriteCommon_;
-    SrvManager* srvManager_;
-    Camera* camera_;
+
+    // unique_ptrによるリソース管理
+    std::unique_ptr<DirectXCommon> dxCommon_;
+    std::unique_ptr<Input> input_;
+    std::unique_ptr<SpriteCommon> spriteCommon_;
+    std::unique_ptr<SrvManager> srvManager_;
+    std::unique_ptr<Camera> camera_;
 
     // シーン管理関連
-    SceneManager* sceneManager_;
-    GameSceneFactory* sceneFactory_;
+    SceneManager* sceneManager_; // シングルトンなのでポインタのみ
+    std::unique_ptr<GameSceneFactory> sceneFactory_;
 };

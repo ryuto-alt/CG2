@@ -4,6 +4,7 @@
 #include <string>
 #include <list>
 #include <random>
+#include <memory>
 #include "DirectXCommon.h"
 #include "SRVManager.h"
 #include "Vector3.h"
@@ -46,7 +47,7 @@ struct Particle {
     bool isDead = false;
 };
 
-// インスタンシング描画用データ（新しいシェーダーに合わせて修正）
+// インスタンシング描画用データ
 struct ParticleForGPU {
     // WVP行列
     Matrix4x4 WVP;
@@ -82,7 +83,7 @@ struct ParticleGroup {
 class ParticleManager {
 private:
     // シングルトン
-    static ParticleManager* instance;
+    static std::unique_ptr<ParticleManager> instance;
 
     // DirectXCommon
     DirectXCommon* dxCommon_ = nullptr;
@@ -164,7 +165,7 @@ public:
     // パーティクルグループの作成
     void CreateParticleGroup(const std::string& name, const std::string& textureFilePath);
 
-    // パーティクルの発生
+    // パーティクルの発生（シンプル版）
     void Emit(const std::string& name, const Vector3& position, uint32_t count);
 
     // パーティクルの発生（詳細設定版）

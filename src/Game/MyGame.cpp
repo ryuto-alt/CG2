@@ -5,18 +5,18 @@
 #include <ParticleManager.h>
 
 MyGame::MyGame()
-    : winApp_(nullptr)
-    , dxCommon_(nullptr)
-    , input_(nullptr)
-    , spriteCommon_(nullptr)
-    , srvManager_(nullptr)
-    , camera_(nullptr)
-    , sceneManager_(nullptr)
-    , sceneFactory_(nullptr) {
+    : winApp_(nullptr),
+    dxCommon_(nullptr),
+    input_(nullptr),
+    spriteCommon_(nullptr),
+    srvManager_(nullptr),
+    camera_(nullptr),
+    sceneManager_(nullptr),
+    sceneFactory_(nullptr) {
 }
 
 MyGame::~MyGame() {
-    // Framework::Finalizeが呼ばれるので、ここでは追加の処理は不要
+    // Finalizeメソッドで解放するため、ここでは何もしない
 }
 
 void MyGame::Initialize() {
@@ -25,18 +25,18 @@ void MyGame::Initialize() {
         assert(winApp_ != nullptr);
 
         // DirectXCommonの初期化
-        dxCommon_ = new DirectXCommon();
+        dxCommon_ = std::make_unique<DirectXCommon>();
         dxCommon_->Initialize(winApp_);
 
         // SRVマネージャの初期化
-        srvManager_ = new SrvManager();
-        srvManager_->Initialize(dxCommon_);
+        srvManager_ = std::make_unique<SrvManager>();
+        srvManager_->Initialize(dxCommon_.get());
 
         // ここで明示的にPreDrawを呼び出し、ディスクリプタヒープを設定
         srvManager_->PreDraw();
 
         // テクスチャマネージャの初期化
-        TextureManager::GetInstance()->Initialize(dxCommon_, srvManager_);
+        TextureManager::GetInstance()->Initialize(dxCommon_.get(), srvManager_.get());
 
         // デフォルトテクスチャの事前読み込み
         TextureManager::GetInstance()->LoadDefaultTexture();
@@ -45,36 +45,36 @@ void MyGame::Initialize() {
         InitializeImGui();
 
         // 入力初期化
-        input_ = new Input();
+        input_ = std::make_unique<Input>();
         input_->Initialize(winApp_);
 
         // スプライト共通部分の初期化
-        spriteCommon_ = new SpriteCommon();
-        spriteCommon_->Initialize(dxCommon_);
+        spriteCommon_ = std::make_unique<SpriteCommon>();
+        spriteCommon_->Initialize(dxCommon_.get());
 
         // カメラの作成と初期化
-        camera_ = new Camera();
+        camera_ = std::make_unique<Camera>();
         camera_->SetTranslate({ 0.0f, 0.0f, -5.0f });
-        Object3dCommon::SetDefaultCamera(camera_);
+        Object3dCommon::SetDefaultCamera(camera_.get());
 
         // パーティクルマネージャの初期化
-        ParticleManager::GetInstance()->Initialize(dxCommon_, srvManager_);
+        ParticleManager::GetInstance()->Initialize(dxCommon_.get(), srvManager_.get());
 
         // 基本的なパーティクルグループの作成
         ParticleManager::GetInstance()->CreateParticleGroup("smoke", "Resources/particle/smoke.png");
 
         // シーンファクトリーの作成
-        sceneFactory_ = new GameSceneFactory();
+        sceneFactory_ = std::make_unique<GameSceneFactory>();
 
-        // シーンマネージャーの作成と初期化
+        // シーンマネージャーの取得と初期化
         sceneManager_ = SceneManager::GetInstance();
-        sceneManager_->SetDirectXCommon(dxCommon_);
-        sceneManager_->SetInput(input_);
-        sceneManager_->SetSpriteCommon(spriteCommon_);
-        sceneManager_->SetSrvManager(srvManager_);
-        sceneManager_->SetCamera(camera_);
+        sceneManager_->SetDirectXCommon(dxCommon_.get());
+        sceneManager_->SetInput(input_.get());
+        sceneManager_->SetSpriteCommon(spriteCommon_.get());
+        sceneManager_->SetSrvManager(srvManager_.get());
+        sceneManager_->SetCamera(camera_.get());
         sceneManager_->SetWinApp(winApp_);
-        sceneManager_->Initialize(sceneFactory_);
+        sceneManager_->Initialize(sceneFactory_.get());
 
         // デバッグ出力
         OutputDebugStringA("MyGame: Successfully initialized\n");
@@ -127,7 +127,7 @@ void MyGame::Update() {
         }
 
         // パーティクルマネージャの更新
-        ParticleManager::GetInstance()->Update(camera_);
+        ParticleManager::GetInstance()->Update(camera_.get());
 
         // シーンマネージャーの更新
         sceneManager_->Update();
@@ -164,13 +164,14 @@ void MyGame::Draw() {
 void MyGame::Finalize() {
     try {
         // シーンマネージャーの終了処理
-        sceneManager_->Finalize();
+        if (sceneManager_) {
+            sceneManager_->Finalize();
+            // シングルトンなのでここではnullptrにするだけ
+            sceneManager_ = nullptr;
+        }
 
         // パーティクルマネージャーの終了処理
         ParticleManager::GetInstance()->Finalize();
-
-        // シーンファクトリーの解放
-        delete sceneFactory_;
 
         // ImGuiの解放
         ImGui_ImplDX12_Shutdown();
@@ -180,14 +181,14 @@ void MyGame::Finalize() {
         // テクスチャマネージャの解放
         TextureManager::GetInstance()->Finalize();
 
-        // カメラの解放
-        delete camera_;
-
-        // リソースの解放
-        delete spriteCommon_;
-        delete input_;
-        delete srvManager_;
-        delete dxCommon_;
+        // 各リソースはunique_ptrにより自動的に解放される
+        // 明示的にnullptrを設定
+        camera_.reset();
+        spriteCommon_.reset();
+        input_.reset();
+        srvManager_.reset();
+        sceneFactory_.reset();
+        dxCommon_.reset();
 
         // winAppはmain.cppで解放するため、ここでは解放しない
 

@@ -3,6 +3,7 @@
 #include "ParticleManager.h"
 #include "Vector3.h"
 #include "Mymath.h"
+#include <memory>
 
 // パーティクルエミッタクラス
 class ParticleEmitter {

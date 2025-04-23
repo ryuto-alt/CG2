@@ -37,7 +37,7 @@ void SceneManager::Update() {
         // 現在のシーンの終了処理
         if (currentScene_) {
             currentScene_->Finalize();
-            currentScene_.reset();
+            currentScene_.reset(); // unique_ptrをクリア
         }
 
         // 次のシーンを生成
@@ -103,7 +103,7 @@ void SceneManager::Finalize() {
         catch (const std::exception& e) {
             OutputDebugStringA(("ERROR: Exception in scene finalize: " + std::string(e.what()) + "\n").c_str());
         }
-        currentScene_.reset();
+        currentScene_.reset(); // 明示的にunique_ptrをクリア
     }
 
     // シングルトンインスタンスの解放

@@ -1,5 +1,3 @@
-// SceneManager.h
-// シーン管理クラス（Singletonパターン）
 #pragma once
 
 #include <memory>
@@ -48,26 +46,16 @@ public:
     // シーン切り替え
     void ChangeScene(const std::string& sceneName);
 
-    // DirectXCommonの設定
+    // リソース設定メソッド
     void SetDirectXCommon(DirectXCommon* dxCommon) { dxCommon_ = dxCommon; }
-
-    // Inputの設定
     void SetInput(Input* input) { input_ = input; }
-
-    // SpriteCommonの設定
     void SetSpriteCommon(SpriteCommon* spriteCommon) { spriteCommon_ = spriteCommon; }
-
-    // SrvManagerの設定
     void SetSrvManager(SrvManager* srvManager) { srvManager_ = srvManager; }
-
-    // WinAppの設定
     void SetWinApp(WinApp* winApp) { winApp_ = winApp; }
-
-    // WinAppの取得
-    WinApp* GetWinApp() const { return winApp_; }
-
-    // Cameraの設定
     void SetCamera(Camera* camera) { camera_ = camera; }
+
+    // リソース取得メソッド
+    WinApp* GetWinApp() const { return winApp_; }
 
 private:
     // シーンファクトリー

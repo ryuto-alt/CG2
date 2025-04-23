@@ -5,18 +5,17 @@
 #include <d3d12.h>
 
 // 静的メンバ変数の実体化
-ParticleManager* ParticleManager::instance = nullptr;
+std::unique_ptr<ParticleManager> ParticleManager::instance = nullptr;
 
 ParticleManager* ParticleManager::GetInstance() {
     if (!instance) {
-        instance = new ParticleManager();
+        instance = std::make_unique<ParticleManager>();
     }
-    return instance;
+    return instance.get();
 }
 
 void ParticleManager::Finalize() {
-    delete instance;
-    instance = nullptr;
+    instance.reset();
 }
 
 void ParticleManager::Initialize(DirectXCommon* dxCommon, SrvManager* srvManager) {
