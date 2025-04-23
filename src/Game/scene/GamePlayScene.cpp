@@ -326,75 +326,94 @@ void GamePlayScene::ControlFPSCamera() {
 }
 
 void GamePlayScene::ShootParticle() {
-    // カメラの位置と向きを取得
+    // カメラの位置と回転角度を取得
     Vector3 cameraPos = camera_->GetTranslate();
     Vector3 cameraRotate = camera_->GetRotate();
 
     // 発射方向（カメラの前方向）を計算
-    Vector3 shootDirection;
-    shootDirection.x = std::sin(cameraRotate.y) * std::cos(cameraRotate.x);
-    shootDirection.y = std::sin(cameraRotate.x);
-    shootDirection.z = std::cos(cameraRotate.y) * std::cos(cameraRotate.x);
+    Vector3 frontDir;
+    frontDir.x = std::sin(cameraRotate.y) * std::cos(cameraRotate.x);
+    frontDir.y = std::sin(cameraRotate.x);
+    frontDir.z = std::cos(cameraRotate.y) * std::cos(cameraRotate.x);
 
-    // 発射位置を常に画面中央になるように修正
-    // カメラの位置をそのまま使用し、カメラの向きに関わらず一定距離前方に配置
-    Vector3 shootPosition = cameraPos;
+    // カメラの上方向を計算
+    Vector3 upDir;
+    upDir.x = std::sin(cameraRotate.y) * std::sin(cameraRotate.x);
+    upDir.y = std::cos(cameraRotate.x);
+    upDir.z = std::cos(cameraRotate.y) * std::sin(cameraRotate.x);
 
-    // カメラの前方向に一定距離進んだ位置を発射位置とする
+    // カメラの右方向を計算（前方向と上方向の外積）
+    Vector3 rightDir;
+    rightDir.x = std::cos(cameraRotate.y);
+    rightDir.y = 0.0f;
+    rightDir.z = -std::sin(cameraRotate.y);
+
+    // 発射位置をカメラの少し前に設定
     float distanceFromCamera = 1.0f;
-    shootPosition.x += shootDirection.x * distanceFromCamera;
-    shootPosition.y += shootDirection.y * distanceFromCamera;
-    shootPosition.z += shootDirection.z * distanceFromCamera;
-
-    // 一定の速度（基準）を設定 - 増加して弾速を上げる
-    float baseSpeed = 35.0f;
-
-    // 固定方向と固定速度を使用
-    Vector3 velBase = {
-        shootDirection.x * baseSpeed,
-        shootDirection.y * baseSpeed,
-        shootDirection.z * baseSpeed
+    Vector3 shootPosition = {
+        cameraPos.x + frontDir.x * distanceFromCamera,
+        cameraPos.y + frontDir.y * distanceFromCamera,
+        cameraPos.z + frontDir.z * distanceFromCamera
     };
 
-    // 確実に最小値 < 最大値となるよう、固定値でランダム範囲を指定
-    float randomRangeMin = -1.0f;
-    float randomRangeMax = 1.0f;
+    // 基本速度の設定（カメラの前方向）
+    float baseSpeed = 35.0f;
+    Vector3 baseVelocity = {
+        frontDir.x * baseSpeed,
+        frontDir.y * baseSpeed,
+        frontDir.z * baseSpeed
+    };
 
-    // 最小速度と最大速度を確実に正しく設定
+    // 上方向へのブースト
+    float upBoostAmount = 3.0f;
+    Vector3 upBoost = {
+        upDir.x * upBoostAmount,
+        upDir.y * upBoostAmount,
+        upDir.z * upBoostAmount
+    };
+
+    // 最終速度の計算（基本速度 + 上方向ブースト）
+    Vector3 finalVelocity = {
+        baseVelocity.x + upBoost.x,
+        baseVelocity.y + upBoost.y,
+        baseVelocity.z + upBoost.z
+    };
+
+    // 固定値のみを使用して最小/最大速度を設定
     Vector3 velMin = {
-        velBase.x + randomRangeMin,
-        velBase.y + randomRangeMin,
-        velBase.z + randomRangeMin
+        finalVelocity.x - 0.5f,
+        finalVelocity.y - 0.5f,
+        finalVelocity.z - 0.5f
     };
 
     Vector3 velMax = {
-        velBase.x + randomRangeMax,
-        velBase.y + randomRangeMax,
-        velBase.z + randomRangeMax
+        finalVelocity.x + 0.5f,
+        finalVelocity.y + 0.5f,
+        finalVelocity.z + 0.5f
     };
 
-    // 放物線を描くようにY方向に強い重力を設定
-    Vector3 accelMin = { 0.0f, -9.8f, 0.0f }; // 最小加速度（重力加速度）
-    Vector3 accelMax = { 0.0f, -8.5f, 0.0f }; // 最大加速度（少しばらつきを持たせる）
+    // 重力方向（上方向の逆）
+    Vector3 gravityDir = {
+        -upDir.x,
+        -upDir.y,
+        -upDir.z
+    };
 
-    // 左右方向にばらつかせるため、発射方向に対して直交するベクトルを計算
-    Vector3 sideDir;
-    sideDir.x = -shootDirection.z;
-    sideDir.y = 0.0f;
-    sideDir.z = shootDirection.x;
+    // 固定の重力強度を使用
+    float gravityStrength = 5.0f; // 重力を弱めに設定
 
-    // サイドベクトルの長さを正規化
-    float sideDirLength = std::sqrt(sideDir.x * sideDir.x + sideDir.z * sideDir.z);
-    if (sideDirLength > 0.0001f) {
-        sideDir.x /= sideDirLength;
-        sideDir.z /= sideDirLength;
-    }
+    // 最小最大加速度（重力）- 非常に小さい差異で設定
+    Vector3 accelMin = {
+        gravityDir.x * gravityStrength - 0.01f,
+        gravityDir.y * gravityStrength - 0.01f,
+        gravityDir.z * gravityStrength - 0.01f
+    };
 
-    // アーチ形状を描くパーティクルの発射
-    // 発射角度を少し上向きに調整することで、より顕著なアーチを描く
-    // Y成分を少し増やして上向きに発射
-    velMin.y += 3.0f;
-    velMax.y += 4.0f;
+    Vector3 accelMax = {
+        gravityDir.x * gravityStrength + 0.01f,
+        gravityDir.y * gravityStrength + 0.01f,
+        gravityDir.z * gravityStrength + 0.01f
+    };
 
     // パーティクルを発射
     ParticleManager::GetInstance()->Emit(
@@ -403,8 +422,8 @@ void GamePlayScene::ShootParticle() {
         20,              // パーティクル数
         velMin,          // 最小速度
         velMax,          // 最大速度
-        accelMin,        // 最小加速度（重力）
-        accelMax,        // 最大加速度（重力）
+        accelMin,        // 最小加速度
+        accelMax,        // 最大加速度
         0.15f,           // 最小開始サイズ
         0.25f,           // 最大開始サイズ
         0.0f,            // 最小終了サイズ
@@ -417,8 +436,8 @@ void GamePlayScene::ShootParticle() {
         6.28f,           // 最大回転角度
         -0.5f,           // 最小回転速度
         0.5f,            // 最大回転速度
-        1.0f,            // 最小寿命（延長）
-        1.5f             // 最大寿命（延長）
+        1.0f,            // 最小寿命
+        1.5f             // 最大寿命
     );
 }
 
