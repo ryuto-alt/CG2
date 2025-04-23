@@ -1,8 +1,5 @@
 #include "GamePlayScene.h"
 #include "SceneManager.h"
-#include "imgui.h"
-#include "imgui_impl_win32.h"
-#include "imgui_impl_dx12.h"
 #include "TextureManager.h"
 #include "ParticleManager.h"
 #include <cassert>
@@ -25,9 +22,6 @@ void GamePlayScene::Initialize() {
         assert(srvManager_);
         assert(camera_);
 
-        // ImGuiの初期化
-        InitializeImGui();
-
         // 3Dモデルの初期化
         Initialize3DModels();
 
@@ -47,8 +41,9 @@ void GamePlayScene::Initialize() {
         prevMouseX_ = 0;
         prevMouseY_ = 0;
 
-        // マウスカーソルを非表示にする
+        // FPSモードに合わせてマウスカーソルを設定
         input_->SetMouseCursor(false);
+        isFPSMode_ = true;
 
         // 回転角度の初期化
         yRotationAngle_ = 0.0f; // Y軸回転用の変数を初期化
@@ -63,11 +58,6 @@ void GamePlayScene::Initialize() {
         OutputDebugStringA(("ERROR: Failed to initialize GamePlayScene: " + std::string(e.what()) + "\n").c_str());
         throw; // 再スローして、上位の例外ハンドラで処理できるようにする
     }
-}
-
-void GamePlayScene::InitializeImGui() {
-    // ImGuiの設定（必要に応じて）
-    OutputDebugStringA("GamePlayScene: ImGui initialized\n");
 }
 
 void GamePlayScene::Initialize3DModels() {
@@ -228,11 +218,14 @@ void GamePlayScene::Update() {
             sceneManager_->ChangeScene("Title");
         }
 
-        // FキーでFPSモード切替
-        if (input_->TriggerKey(DIK_F)) {
-            isFPSMode_ = !isFPSMode_;
-            // FPSモードでない場合はマウスカーソルを表示
-            input_->SetMouseCursor(!isFPSMode_);
+        // TABキーでマウスカーソルの表示切替
+        if (input_->TriggerKey(DIK_TAB)) {
+            // マウスカーソルの表示状態を切り替え
+            showCursor_ = !showCursor_;
+            input_->SetMouseCursor(showCursor_);
+
+            // FPSモードもカーソル表示に連動させる
+            isFPSMode_ = !showCursor_;
         }
     }
     catch (const std::exception& e) {
@@ -343,14 +336,18 @@ void GamePlayScene::ShootParticle() {
     shootDirection.y = std::sin(cameraRotate.x);
     shootDirection.z = std::cos(cameraRotate.y) * std::cos(cameraRotate.x);
 
-    // 発射位置（カメラの少し前）
+    // 発射位置を常に画面中央になるように修正
+    // カメラの位置をそのまま使用し、カメラの向きに関わらず一定距離前方に配置
     Vector3 shootPosition = cameraPos;
-    shootPosition.x += shootDirection.x * 1.0f;
-    shootPosition.y += shootDirection.y * 1.0f;
-    shootPosition.z += shootDirection.z * 1.0f;
 
-    // 一定の速度（基準）を設定
-    float baseSpeed = 10.0f;
+    // カメラの前方向に一定距離進んだ位置を発射位置とする
+    float distanceFromCamera = 1.0f;
+    shootPosition.x += shootDirection.x * distanceFromCamera;
+    shootPosition.y += shootDirection.y * distanceFromCamera;
+    shootPosition.z += shootDirection.z * distanceFromCamera;
+
+    // 一定の速度（基準）を設定 - 増加して弾速を上げる
+    float baseSpeed = 35.0f;
 
     // 固定方向と固定速度を使用
     Vector3 velBase = {
@@ -360,8 +357,8 @@ void GamePlayScene::ShootParticle() {
     };
 
     // 確実に最小値 < 最大値となるよう、固定値でランダム範囲を指定
-    float randomRangeMin = -2.0f;
-    float randomRangeMax = 2.0f;
+    float randomRangeMin = -1.0f;
+    float randomRangeMax = 1.0f;
 
     // 最小速度と最大速度を確実に正しく設定
     Vector3 velMin = {
@@ -376,19 +373,42 @@ void GamePlayScene::ShootParticle() {
         velBase.z + randomRangeMax
     };
 
+    // 放物線を描くようにY方向に強い重力を設定
+    Vector3 accelMin = { 0.0f, -9.8f, 0.0f }; // 最小加速度（重力加速度）
+    Vector3 accelMax = { 0.0f, -8.5f, 0.0f }; // 最大加速度（少しばらつきを持たせる）
+
+    // 左右方向にばらつかせるため、発射方向に対して直交するベクトルを計算
+    Vector3 sideDir;
+    sideDir.x = -shootDirection.z;
+    sideDir.y = 0.0f;
+    sideDir.z = shootDirection.x;
+
+    // サイドベクトルの長さを正規化
+    float sideDirLength = std::sqrt(sideDir.x * sideDir.x + sideDir.z * sideDir.z);
+    if (sideDirLength > 0.0001f) {
+        sideDir.x /= sideDirLength;
+        sideDir.z /= sideDirLength;
+    }
+
+    // アーチ形状を描くパーティクルの発射
+    // 発射角度を少し上向きに調整することで、より顕著なアーチを描く
+    // Y成分を少し増やして上向きに発射
+    velMin.y += 3.0f;
+    velMax.y += 4.0f;
+
     // パーティクルを発射
     ParticleManager::GetInstance()->Emit(
         "beam",          // グループ名
         shootPosition,   // 発射位置
-        20,              // パーティクル数（少し減らす）
+        20,              // パーティクル数
         velMin,          // 最小速度
         velMax,          // 最大速度
-        { 0.0f, -0.2f, 0.0f }, // 最小加速度
-        { 0.0f, 0.0f, 0.0f },  // 最大加速度
-        0.1f,            // 最小開始サイズ
-        0.2f,            // 最大開始サイズ
+        accelMin,        // 最小加速度（重力）
+        accelMax,        // 最大加速度（重力）
+        0.15f,           // 最小開始サイズ
+        0.25f,           // 最大開始サイズ
         0.0f,            // 最小終了サイズ
-        0.0f,            // 最大終了サイズ
+        0.05f,           // 最大終了サイズ
         { 0.7f, 0.7f, 1.0f, 1.0f }, // 最小開始色
         { 1.0f, 1.0f, 1.0f, 1.0f }, // 最大開始色
         { 0.0f, 0.2f, 0.8f, 0.0f }, // 最小終了色
@@ -397,8 +417,8 @@ void GamePlayScene::ShootParticle() {
         6.28f,           // 最大回転角度
         -0.5f,           // 最小回転速度
         0.5f,            // 最大回転速度
-        0.3f,            // 最小寿命
-        0.6f             // 最大寿命
+        1.0f,            // 最小寿命（延長）
+        1.5f             // 最大寿命（延長）
     );
 }
 
@@ -416,49 +436,11 @@ void GamePlayScene::Draw() {
         // 3Dオブジェクトの描画
         axisObject_->Draw();
 
-        // ImGuiの描画
-        DrawImGui();
+        // 描画の順序を確認: パーティクルは最後に描画される
+        // ParticleManagerの描画はMyGame.cppのDraw内で行われる
     }
     catch (const std::exception& e) {
         OutputDebugStringA(("ERROR in GamePlayScene::Draw: " + std::string(e.what()) + "\n").c_str());
-    }
-}
-
-void GamePlayScene::DrawImGui() {
-    try {
-        // ImGuiの新しいフレーム開始
-        ImGui_ImplDX12_NewFrame();
-        ImGui_ImplWin32_NewFrame();
-        ImGui::NewFrame();
-
-        // ImGuiウィンドウ
-        ImGui::Begin("GamePlayScene");
-        ImGui::Text("Controls:");
-        ImGui::Text("WASD - Move");
-        ImGui::Text("Mouse - Look around");
-        ImGui::Text("Left Click - Shoot particle");
-        ImGui::Text("F - Toggle FPS mode");
-        ImGui::Text("Q/E - Move up/down");
-        ImGui::Text("ESC - Return to title");
-
-        ImGui::Separator();
-
-        ImGui::Text("Camera Position: %.2f, %.2f, %.2f",
-            camera_->GetTranslate().x,
-            camera_->GetTranslate().y,
-            camera_->GetTranslate().z);
-        ImGui::Text("Camera Rotation: Yaw=%.2f, Pitch=%.2f",
-            cameraYaw_, cameraPitch_);
-        ImGui::Text("Y Rotation Angle: %.2f", yRotationAngle_);
-        ImGui::Text("FPS Mode: %s", isFPSMode_ ? "ON" : "OFF");
-        ImGui::End();
-
-        // ImGuiの描画
-        ImGui::Render();
-        ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), dxCommon_->GetCommandList());
-    }
-    catch (const std::exception& e) {
-        OutputDebugStringA(("ERROR in DrawImGui: " + std::string(e.what()) + "\n").c_str());
     }
 }
 
