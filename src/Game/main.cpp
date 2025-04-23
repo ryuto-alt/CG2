@@ -80,7 +80,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
     // パーティクルグループの作成 - star.pngのみを使用
     ParticleManager::GetInstance()->CreateParticleGroup("star", "resources/particle/star.png");
-    ParticleManager::GetInstance()->CreateParticleGroup("star_green", "resources/particle/star.png");
+    ParticleManager::GetInstance()->CreateParticleGroup("star_green", "resources/particle/fire.png");
     ParticleManager::GetInstance()->CreateParticleGroup("star_purple", "resources/particle/star.png");
 
     // ImGuiの初期化
@@ -132,7 +132,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         10,                        // 一度に発生する数
         10.0f,                     // 発生頻度
         { -1.5f, 0.1f, -0.2f },   // 最小速度 - 横方向に強い
-        { 1.5f, 0.8f, 0.2f },     // 最大速度 - 横方向に強い
+        { 1.5f, 8.8f, 0.2f },     // 最大速度 - 横方向に強い
         { 0.0f, 0.1f, 0.0f },     // 最小加速度 - わずかに上向き
         { 0.0f, 0.3f, 0.0f },     // 最大加速度 - わずかに上向き
         3.0f,                     // 最小開始サイズ
@@ -281,11 +281,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
             greenStarEmitter->SetEmitting(greenEmitting);
         }
         uint32_t greenCount = greenStarEmitter->GetEmitCount();
-        if (ImGui::DragInt("Green Count", (int*)&greenCount, 1, 1, 10)) {
+        if (ImGui::DragInt("Green Count", (int*)&greenCount, 1, 1, 100)) {
             greenStarEmitter->SetEmitCount(greenCount);
         }
         float greenRate = greenStarEmitter->GetEmitRate();
-        if (ImGui::DragFloat("Green Rate", &greenRate, 0.1f, 0.1f, 5.0f)) {
+        if (ImGui::DragFloat("Green Rate", &greenRate, 0.1f, 0.1f, 100.0f)) {
             greenStarEmitter->SetEmitRate(greenRate);
         }
 
