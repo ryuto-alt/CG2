@@ -96,15 +96,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
     // カメラの作成と初期化
     Camera* camera = new Camera();
-    camera->SetTranslate({ 0.0f, 0.0f, -5.0f });
+    camera->SetTranslate({ 0.670f, 0.0f, -20.0f });
     Object3dCommon::SetDefaultCamera(camera);
 
     // 青色系の星パーティクル
     ParticleEmitter* blueStarEmitter = new ParticleEmitter(
         "star",  // 元のグループ名
         { -1.0f, 0.5f, -2.0f },   // 固定位置
-        2,                        // 一度に発生する数
-        0.3f,                     // 発生頻度
+        10,                        // 一度に発生する数
+        10.0f,                     // 発生頻度
         { -1.0f, -1.0f, -1.0f },  // 最小速度
         { 1.0f, 1.0f, 1.0f },     // 最大速度
         { 0.0f, -0.5f, 0.0f },    // 最小加速度
@@ -128,9 +128,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     // 緑色系の星パーティクル - 横方向の動きを強調
     ParticleEmitter* greenStarEmitter = new ParticleEmitter(
         "star_green",  // 新しいグループ名
-        { 0.0f, 0.5f, -2.0f },    // 固定位置（中央）
-        2,                        // 一度に発生する数
-        0.4f,                     // 発生頻度
+        { 1.0f, 0.5f, -2.0f },    // 固定位置（中央）
+        10,                        // 一度に発生する数
+        10.0f,                     // 発生頻度
         { -1.5f, 0.1f, -0.2f },   // 最小速度 - 横方向に強い
         { 1.5f, 0.8f, 0.2f },     // 最大速度 - 横方向に強い
         { 0.0f, 0.1f, 0.0f },     // 最小加速度 - わずかに上向き
@@ -154,9 +154,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     // 紫色系の星パーティクル - 爆発的な動き
     ParticleEmitter* purpleStarEmitter = new ParticleEmitter(
         "star_purple",  // 新しいグループ名
-        { 1.0f, 0.5f, -2.0f },    // 固定位置（右側）
-        3,                        // 一度に発生する数
-        0.6f,                     // 発生頻度
+        { 3.0f, 0.5f, -2.0f },    // 固定位置（右側）
+        10,                        // 一度に発生する数
+        10.0f,                     // 発生頻度
         { -2.0f, -2.0f, -2.0f },  // 最小速度 - 全方向に強い
         { 2.0f, 2.0f, 2.0f },     // 最大速度 - 全方向に強い
         { 0.0f, -0.2f, 0.0f },    // 最小加速度 - わずかに下向き - 修正：min <= max になるよう値を入れ替え
