@@ -28,14 +28,14 @@ void ParticleManager::Initialize(DirectXCommon* dxCommon, SrvManager* srvManager
     dxCommon_ = dxCommon;
     srvManager_ = srvManager;
 
-    // 乱数エンジンの初期化
+   
     std::random_device seed_gen;
     randomEngine_.seed(seed_gen());
 
     // グラフィックスパイプラインの初期化
     InitializeGraphicsPipeline();
 
-    // 頂点データの作成（四角形ポリゴン）
+
     std::vector<VertexData> vertices = {
         { {-0.5f, -0.5f, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, -1.0f} }, // 左下
         { {-0.5f,  0.5f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, -1.0f} }, // 左上
@@ -77,13 +77,12 @@ void ParticleManager::Initialize(DirectXCommon* dxCommon, SrvManager* srvManager
 }
 
 void ParticleManager::InitializeGraphicsPipeline() {
-    // シェーダーの読み込み - パスを修正してシェーダーを正しく読み込む
     Microsoft::WRL::ComPtr<IDxcBlob> vsBlob = dxCommon_->CompileShader(
         L"Resources/Shaders/Particle.VS.hlsl", L"vs_6_0");
     Microsoft::WRL::ComPtr<IDxcBlob> psBlob = dxCommon_->CompileShader(
         L"Resources/Shaders/Particle.PS.hlsl", L"ps_6_0");
 
-    // 頂点レイアウト - 新しいシェーダーの入力に合わせる
+    
     D3D12_INPUT_ELEMENT_DESC inputElementDescs[3] = {};
     inputElementDescs[0].SemanticName = "POSITION";
     inputElementDescs[0].SemanticIndex = 0;
@@ -366,29 +365,28 @@ void ParticleManager::Update(const Camera* camera) {
 }
 
 void ParticleManager::Emit(const std::string& name, const Vector3& position, uint32_t count) {
-    // 詳細設定版のEmitを呼び出し
     Emit(
         name,
         position,
         count,
-        { -1.0f, -1.0f, -1.0f },  // velocityMin
-        { 1.0f, 1.0f, 1.0f },     // velocityMax
-        { 0.0f, 0.0f, 0.0f },     // accelMin
-        { 0.0f, -9.8f, 0.0f },    // accelMax
-        0.5f,                     // startSizeMin
-        1.0f,                     // startSizeMax
-        0.0f,                     // endSizeMin
-        0.0f,                     // endSizeMax
+        { -1.0f, -1.0f, -1.0f },    // velocityMin
+        { 1.0f, 1.0f, 1.0f },       // velocityMax
+        { 0.0f, 0.0f, 0.0f },       // accelMin
+        { 0.0f, -9.8f, 0.0f },      // accelMax
+        0.5f,                       // startSizeMin
+        1.0f,                       // startSizeMax
+        0.0f,                       // endSizeMin
+        0.0f,                       // endSizeMax
         { 1.0f, 1.0f, 1.0f, 1.0f }, // startColorMin
         { 1.0f, 1.0f, 1.0f, 1.0f }, // startColorMax
         { 1.0f, 1.0f, 1.0f, 0.0f }, // endColorMin
         { 1.0f, 1.0f, 1.0f, 0.0f }, // endColorMax
-        0.0f,                     // rotationMin
-        0.0f,                     // rotationMax
-        0.0f,                     // rotationVelocityMin
-        0.0f,                     // rotationVelocityMax
-        1.0f,                     // lifeTimeMin
-        3.0f                      // lifeTimeMax
+        0.0f,                       // rotationMin
+        0.0f,                       // rotationMax
+        0.0f,                       // rotationVelocityMin
+        0.0f,                       // rotationVelocityMax
+        1.0f,                       // lifeTimeMin
+        3.0f                        // lifeTimeMax
     );
 }
 
@@ -542,7 +540,6 @@ void ParticleManager::Draw() {
     }
 }
 
-// デバッグ用：シンプルな四角形を描画
 void ParticleManager::DrawSimpleQuad() {
     // コマンドリストの取得
     ID3D12GraphicsCommandList* commandList = dxCommon_->GetCommandList();
@@ -561,7 +558,7 @@ void ParticleManager::DrawSimpleQuad() {
     commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
     commandList->SetGraphicsRootConstantBufferView(1, directionalLightResource->GetGPUVirtualAddress());
 
-    // テクスチャのテスト用にsmoke.pngを使用
+
     auto it = particleGroups.find("smoke");
     if (it != particleGroups.end()) {
         // テクスチャをセット

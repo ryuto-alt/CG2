@@ -54,7 +54,7 @@ ParticleEmitter::ParticleEmitter(
     ParticleManager::GetInstance()->Emit(
         name_,
         transform_.translate,
-        emitCount_ * 5, // 初期状態では通常の5倍のパーティクルを発生
+        emitCount_ * 5, 
         velocityMin_,
         velocityMax_,
         accelMin_,
@@ -76,18 +76,17 @@ ParticleEmitter::ParticleEmitter(
 }
 
 void ParticleEmitter::Update() {
-    // 発生フラグがOFFなら処理しない
+    // フラグがOFFなら処理しない
     if (!isEmitting_) {
         return;
     }
 
-    // 時間を進める
+   
     currentTime_ += 1.0f / 60.0f; // 60FPS想定
 
     // 発生頻度から発生タイミングを計算
     float interval = 1.0f / emitRate_;
 
-    // 発生タイミングを超えていたらパーティクルを発生
     if (currentTime_ >= interval) {
         // 発生処理
         ParticleManager::GetInstance()->Emit(
@@ -113,7 +112,6 @@ void ParticleEmitter::Update() {
             lifeTimeMin_,
             lifeTimeMax_);
 
-        // 経過時間を戻す（余剰分を考慮）
         currentTime_ -= interval;
     }
 }
