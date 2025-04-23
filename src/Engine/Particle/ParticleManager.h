@@ -82,9 +82,6 @@ struct ParticleGroup {
 // パーティクルマネージャクラス
 class ParticleManager {
 private:
-    // シングルトン
-    static std::unique_ptr<ParticleManager> instance;
-
     // DirectXCommon
     DirectXCommon* dxCommon_ = nullptr;
 
@@ -120,12 +117,6 @@ private:
     // ビルボード行列
     Matrix4x4 billboardMatrix;
 
-    // コンストラクタ（シングルトン）
-    ParticleManager() = default;
-
-    // デストラクタ（シングルトン）
-    ~ParticleManager() = default;
-
     // コピー禁止
     ParticleManager(const ParticleManager&) = delete;
     ParticleManager& operator=(const ParticleManager&) = delete;
@@ -146,12 +137,24 @@ private:
     // フレンドクラス
     friend class ParticleEmitter;
 
+    // コンストラクタ（シングルトン）
+    ParticleManager() = default;
+    // デストラクタ
+    ~ParticleManager() = default;
+
 public:
     // シングルトンインスタンスの取得
-    static ParticleManager* GetInstance();
+    static ParticleManager* GetInstance() {
+        // スレッドセーフなMeyer'sシングルトンパターン
+        static ParticleManager instance;
+        return &instance;
+    }
 
     // 終了処理
-    static void Finalize();
+    static void Finalize() {
+        // Meyer'sシングルトンパターンでは何もする必要がない
+        // インスタンスは自動的に破棄される
+    }
 
     // 初期化
     void Initialize(DirectXCommon* dxCommon, SrvManager* srvManager);

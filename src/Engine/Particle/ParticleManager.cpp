@@ -4,19 +4,7 @@
 #include <algorithm>
 #include <d3d12.h>
 
-// 静的メンバ変数の実体化
-std::unique_ptr<ParticleManager> ParticleManager::instance = nullptr;
-
-ParticleManager* ParticleManager::GetInstance() {
-    if (!instance) {
-        instance = std::make_unique<ParticleManager>();
-    }
-    return instance.get();
-}
-
-void ParticleManager::Finalize() {
-    instance.reset();
-}
+// Meyer's Singletonパターンでは、静的メンバ変数やGetInstance、Finalizeの実装は不要になります
 
 void ParticleManager::Initialize(DirectXCommon* dxCommon, SrvManager* srvManager) {
     // nullptrチェック
@@ -229,8 +217,12 @@ void ParticleManager::InitializeGraphicsPipeline() {
 }
 
 void ParticleManager::CreateParticleGroup(const std::string& name, const std::string& textureFilePath) {
-    // 既に同名のグループが存在したら処理しない
-    assert(particleGroups.find(name) == particleGroups.end());
+    // 既に同名のグループが存在する場合は処理をスキップ
+    if (particleGroups.find(name) != particleGroups.end()) {
+        // 既存のグループがあることをデバッグ出力
+        OutputDebugStringA(("ParticleManager: Group already exists - " + name + "\n").c_str());
+        return;
+    }
 
     // 新規パーティクルグループを作成
     ParticleGroup group;
@@ -259,6 +251,9 @@ void ParticleManager::CreateParticleGroup(const std::string& name, const std::st
 
     // パーティクルグループを登録
     particleGroups[name] = group;
+
+    // 登録成功をデバッグ出力
+    OutputDebugStringA(("ParticleManager: Created particle group - " + name + "\n").c_str());
 }
 
 void ParticleManager::CalculateBillboardMatrix(const Camera* camera) {

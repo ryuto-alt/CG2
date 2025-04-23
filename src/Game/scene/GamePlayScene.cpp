@@ -117,38 +117,46 @@ void GamePlayScene::Initialize3DModels() {
 
 void GamePlayScene::InitializeParticles() {
     try {
-        // パーティクルグループがなければ作成
+        // パーティクルグループの作成（既存の場合はスキップされる）
         ParticleManager::GetInstance()->CreateParticleGroup("beam", "Resources/particle/particle.png");
 
-        // パーティクルエミッタの作成
-        // 重要: 最小値と最大値を確実に正しく設定
-        particleEmitter_ = std::make_unique<ParticleEmitter>(
-            "beam",                // グループ名
-            Vector3{ 0, 0, 0 },      // 位置（後で更新）
-            10,                    // 一度に発生するパーティクル数
-            5.0f,                  // 発生頻度（秒間）
-            Vector3{ -0.5f, -0.5f, -0.5f }, // 最小速度（確実に最小値）
-            Vector3{ 0.5f, 0.5f, 0.5f },    // 最大速度（確実に最大値）
-            Vector3{ 0.0f, -0.2f, 0.0f },   // 最小加速度（y方向に少し下向き）
-            Vector3{ 0.0f, 0.0f, 0.0f },    // 最大加速度（無加速）
-            0.1f,                  // 最小開始サイズ
-            0.3f,                  // 最大開始サイズ
-            0.0f,                  // 最小終了サイズ
-            0.05f,                 // 最大終了サイズ
-            Vector4{ 0.5f, 0.5f, 1.0f, 0.7f }, // 最小開始色
-            Vector4{ 1.0f, 1.0f, 1.0f, 1.0f }, // 最大開始色
-            Vector4{ 0.0f, 0.2f, 0.8f, 0.0f }, // 最小終了色
-            Vector4{ 0.2f, 0.5f, 1.0f, 0.1f }, // 最大終了色
-            0.0f,                  // 最小回転角度
-            6.28f,                 // 最大回転角度
-            -0.3f,                 // 最小回転速度
-            0.3f,                  // 最大回転速度
-            0.3f,                  // 最小寿命
-            0.8f                   // 最大寿命
-        );
+        // パーティクルエミッタが既に作成されている場合は再利用
+        if (!particleEmitter_) {
+            // パーティクルエミッタの作成
+            // 重要: 最小値と最大値を確実に正しく設定
+            particleEmitter_ = std::make_unique<ParticleEmitter>(
+                "beam",                // グループ名
+                Vector3{ 0, 0, 0 },      // 位置（後で更新）
+                10,                    // 一度に発生するパーティクル数
+                5.0f,                  // 発生頻度（秒間）
+                Vector3{ -0.5f, -0.5f, -0.5f }, // 最小速度（確実に最小値）
+                Vector3{ 0.5f, 0.5f, 0.5f },    // 最大速度（確実に最大値）
+                Vector3{ 0.0f, -0.2f, 0.0f },   // 最小加速度（y方向に少し下向き）
+                Vector3{ 0.0f, 0.0f, 0.0f },    // 最大加速度（無加速）
+                0.1f,                  // 最小開始サイズ
+                0.3f,                  // 最大開始サイズ
+                0.0f,                  // 最小終了サイズ
+                0.05f,                 // 最大終了サイズ
+                Vector4{ 0.5f, 0.5f, 1.0f, 0.7f }, // 最小開始色
+                Vector4{ 1.0f, 1.0f, 1.0f, 1.0f }, // 最大開始色
+                Vector4{ 0.0f, 0.2f, 0.8f, 0.0f }, // 最小終了色
+                Vector4{ 0.2f, 0.5f, 1.0f, 0.1f }, // 最大終了色
+                0.0f,                  // 最小回転角度
+                6.28f,                 // 最大回転角度
+                -0.3f,                 // 最小回転速度
+                0.3f,                  // 最大回転速度
+                0.3f,                  // 最小寿命
+                0.8f                   // 最大寿命
+            );
 
-        // デフォルトではエミッタの自動発生を無効化
-        particleEmitter_->SetEmitting(false);
+            // デフォルトではエミッタの自動発生を無効化
+            particleEmitter_->SetEmitting(false);
+        }
+        else {
+            // 既存のエミッタがある場合は位置をリセット
+            particleEmitter_->SetPosition(Vector3{ 0, 0, 0 });
+            particleEmitter_->SetEmitting(false);
+        }
 
         OutputDebugStringA("GamePlayScene: Particles initialized successfully\n");
     }
