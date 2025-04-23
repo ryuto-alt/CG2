@@ -57,7 +57,7 @@ void GamePlayScene::Initialize3DModels() {
         // Axisモデルの初期化
         axisModel_ = std::make_unique<Model>();
         axisModel_->Initialize(dxCommon_);
-        axisModel_->LoadFromObj("Resources/models", "dragon.obj");
+        axisModel_->LoadFromObj("Resources/models", "sphere.obj");
 
         // モデル読み込み後に明示的にテクスチャを確認
         std::string texturePath = axisModel_->GetTextureFilePath();
