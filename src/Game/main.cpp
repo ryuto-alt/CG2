@@ -22,7 +22,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     game->SetWinApp(winApp);
 
     // ゲームのメインループを実行
-    // これにより、Initialize -> (Update/Draw のループ) -> Finalize の流れが実行される
     game->Run();
 
     // ゲームの解放
