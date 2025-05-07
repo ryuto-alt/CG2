@@ -26,6 +26,8 @@ public:
 	// マウス関連の追加機能
 	HRESULT GetMouseState(DIMOUSESTATE* mouseState);
 	void SetMouseCursor(bool visible);
+	// マウスカーソルの表示と拘束を設定する関数
+	void SetMouseCursorConfined(bool visible, bool confined = false);
 
 private:
 	BYTE key[256] = {};

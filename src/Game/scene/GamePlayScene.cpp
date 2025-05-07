@@ -18,8 +18,9 @@ void GamePlayScene::Initialize() {
     // カメラの初期位置設定
     camera_->SetTranslate({ 0.0f, 1.0f, -5.0f });
 
-    // マウスカーソルを非表示に
-    input_->SetMouseCursor(false);
+    // マウスカーソルを非表示かつウィンドウ内に拘束
+    showCursor_ = false;
+    input_->SetMouseCursorConfined(showCursor_, true);
 
     // 初期化完了
     initialized_ = true;
@@ -37,15 +38,17 @@ void GamePlayScene::Update() {
 
     // ESCキーでタイトルシーンへ戻る
     if (input_->TriggerKey(DIK_ESCAPE)) {
-        // マウスカーソルを表示に戻す
-        input_->SetMouseCursor(true);
+        // マウスカーソルを表示に戻し、拘束を解除
+        input_->SetMouseCursorConfined(true, false);
         SceneManager::GetInstance()->ChangeScene("Title");
     }
 
     // TABキーでマウスカーソルの表示切替
     if (input_->TriggerKey(DIK_TAB)) {
         showCursor_ = !showCursor_;
-        input_->SetMouseCursor(showCursor_);
+        // カーソルの表示/非表示と拘束状態を設定
+        // 非表示の場合は拘束する
+        input_->SetMouseCursorConfined(showCursor_, !showCursor_);
     }
 }
 
@@ -97,6 +100,6 @@ void GamePlayScene::DrawImGui() {
 }
 
 void GamePlayScene::Finalize() {
-    // マウスカーソルを表示に戻す
-    input_->SetMouseCursor(true);
+    // マウスカーソルを表示に戻し、拘束を解除する
+    input_->SetMouseCursorConfined(true, false);
 }

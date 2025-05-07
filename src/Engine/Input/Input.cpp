@@ -96,7 +96,41 @@ HRESULT Input::GetMouseState(DIMOUSESTATE* mouseState)
 	return mouse->GetDeviceState(sizeof(DIMOUSESTATE), mouseState);
 }
 
+void Input::SetMouseCursorConfined(bool visible, bool confined)
+{
+	// カーソルの表示状態を確実に設定する
+	// ShowCursorは内部カウンタを使用するため、ループで確実に状態を変更する
+	while (ShowCursor(visible) < 0 && visible) { ShowCursor(visible); }
+	while (ShowCursor(visible) >= 0 && !visible) { ShowCursor(visible); }
+	
+	// カーソル拘束の処理
+	if (confined) {
+		// ウィンドウのクライアント領域を取得
+		RECT clientRect;
+		GetClientRect(winApp_->GetHwnd(), &clientRect);
+		
+		// クライアント座標をスクリーン座標に変換
+		POINT upperLeft = { clientRect.left, clientRect.top };
+		POINT lowerRight = { clientRect.right, clientRect.bottom };
+		ClientToScreen(winApp_->GetHwnd(), &upperLeft);
+		ClientToScreen(winApp_->GetHwnd(), &lowerRight);
+		
+		// 拘束する矩形を設定
+		clientRect.left = upperLeft.x;
+		clientRect.top = upperLeft.y;
+		clientRect.right = lowerRight.x;
+		clientRect.bottom = lowerRight.y;
+		
+		// カーソルを拘束
+		ClipCursor(&clientRect);
+	} else {
+		// カーソル拘束を解除
+		ClipCursor(NULL);
+	}
+}
+
 void Input::SetMouseCursor(bool visible)
 {
-	ShowCursor(visible);
+	// 拘束なしでカーソル表示状態を設定
+	SetMouseCursorConfined(visible, false);
 }
