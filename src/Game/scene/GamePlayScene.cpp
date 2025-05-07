@@ -28,8 +28,10 @@ void GamePlayScene::Initialize() {
     camera_->SetTranslate({ 0.0f, cameraHeight_, -cameraDistance_ });
     camera_->SetTarget({ 0.0f, 0.0f, 0.0f });
 
-    // マウスカーソルを非表示に
-    input_->SetMouseCursor(false);
+    // 初期状態ではマウスカーソルを非表示に設定
+    showCursor_ = false;
+    input_->SetMouseCursor(showCursor_);
+    OutputDebugStringA("GamePlayScene: Mouse cursor hidden\n");
 
     // デバッグ情報を追加
     OutputDebugStringA("モデル初期化開始\n");
@@ -232,6 +234,10 @@ void GamePlayScene::DrawImGui() {
 }
 
 void GamePlayScene::Finalize() {
-    // マウスカーソルを表示に戻す
-    input_->SetMouseCursor(true);
+    // マウスカーソルを確実に表示状態に戻す
+    if (input_) {
+        showCursor_ = true;
+        input_->SetMouseCursor(true);
+        OutputDebugStringA("GamePlayScene: Mouse cursor restored to visible state\n");
+    }
 }

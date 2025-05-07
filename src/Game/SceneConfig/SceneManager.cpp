@@ -38,6 +38,11 @@ void SceneManager::Update() {
         if (currentScene_) {
             currentScene_->Finalize();
             currentScene_.reset(); // unique_ptrをクリア
+            
+            // シーン切り替え時に必ずマウスカーソルを表示状態に戻す
+            if (input_) {
+                input_->SetMouseCursor(true);
+            }
         }
 
         // 次のシーンを生成
@@ -104,6 +109,12 @@ void SceneManager::Finalize() {
             OutputDebugStringA(("ERROR: Exception in scene finalize: " + std::string(e.what()) + "\n").c_str());
         }
         currentScene_.reset(); // 明示的にunique_ptrをクリア
+        
+        // 終了時に必ずマウスカーソルを表示状態に戻す
+        if (input_) {
+            input_->SetMouseCursor(true);
+            OutputDebugStringA("SceneManager: Restored mouse cursor to visible state\n");
+        }
     }
 
     // シングルトンインスタンスの解放
