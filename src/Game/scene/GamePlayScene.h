@@ -2,8 +2,8 @@
 
 #include "IScene.h"
 #include "UnoEngine.h"
-#include "../Player.h"
-#include "../Ground.h"
+#include "Player.h"
+#include "Ground.h"
 #include <memory>
 
 // ゲームプレイシーンクラス - 完全実装
