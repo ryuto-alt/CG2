@@ -1,5 +1,6 @@
 #include "Player.h"
 #include <cassert>
+#include <algorithm>
 
 Player::Player() {
     // 必要なオブジェクトの作成
@@ -41,11 +42,11 @@ void Player::Update() {
     // 入力による移動
     Move();
 
-    // 物理更新
+    // 物理更新の中でobject_->Update()を呼び出すように修正したので
+    // ここでは適切な順番で実行されるようにする
     UpdatePhysics();
-
-    // オブジェクトの更新
-    object_->Update();
+    
+    // 最終位置の接地チェックなどの追加処理に必要ならここに実装
 }
 
 void Player::Draw() {
@@ -108,73 +109,125 @@ void Player::Move() {
     }
 
     // ジャンプ
+    // 接地している場合のみジャンプ可能
     if (input_->TriggerKey(DIK_SPACE) && isGrounded_) {
-        velocity_.y = jumpPower_;
+        // ジャンプ力を少し強くして明確なジャンプを可能に
+        velocity_.y = jumpPower_ * 1.5f;
+        // 直後に接地してしまわないように、即座に接地フラグをリセット
         isGrounded_ = false;
     }
 }
 
 void Player::UpdatePhysics() {
-    // 重力の適用
+    // 接地判定の保存
+    bool wasGrounded = isGrounded_;
+    
+    // 位置を取得
+    Vector3 position = object_->GetPosition();
+    
+    // 接地していない場合のみ重力を適用
     if (!isGrounded_) {
+        // 重力を大きくして落下感を増す
         velocity_.y -= gravity_;
+    } else {
+        // 接地中はY速度を完全に0にして安定させる
+        velocity_.y = 0.0f;
     }
 
-    // 位置の更新
-    Vector3 position = object_->GetPosition();
-    position.x += velocity_.x;
-    position.y += velocity_.y;
-    position.z += velocity_.z;
+    // 速度に上限と下限を設定
+    const float maxVelocity = 1.5f;  // 最大速度を増加
+    const float minVelocity = -1.5f; // 最小速度を増加
+    velocity_.y = std::clamp(velocity_.y, minVelocity, maxVelocity);
 
-    // 位置の反映
-    object_->SetPosition(position);
-
-    // 接地判定のリセット（衝突判定で再設定される）
-    isGrounded_ = false;
+    // 接地している場合は、位置を固定して安定させる
+    if (isGrounded_ && wasGrounded) {
+        // Y座標を安定させる（前のフレームからも接地している場合）
+        position.y = 0.5f; // 球体半径分の高さ
+        object_->SetPosition(position);
+        
+        // XZ方向の移動のみを適用
+        position.x += velocity_.x;
+        position.z += velocity_.z;
+        object_->SetPosition(position);
+        
+        // 衝突判定を行う
+        object_->Update();
+        return; // ここで処理終了
+    }
+    
+    // 非接地の場合は通常かつ行分割した移動処理
+    // 移動ステップ数を増やしてより細かくチェック
+    const int steps = 8; 
+    Vector3 stepVelocity = {
+        velocity_.x / steps,
+        velocity_.y / steps,
+        velocity_.z / steps
+    };
+    
+    // 分割した各ステップで移動と衝突判定を行う
+    for (int i = 0; i < steps; i++) {
+        // 前の反復で接地した場合は処理を終了
+        if (isGrounded_) {
+            break;
+        }
+        
+        // 位置を更新
+        position.x += stepVelocity.x;
+        position.y += stepVelocity.y;
+        position.z += stepVelocity.z;
+        
+        // 位置を反映
+        object_->SetPosition(position);
+        
+        // 衝突判定を行う
+        object_->Update();
+    }
 }
 
 void Player::OnCollision(const Collider::CollisionInfo& info) {
-    // 衝突した場所が下側ならプレイヤーは地面に接地している
-    if (info.normal.y > 0.1f) {
-        // 接地判定を有効にする（条件を緩和）
-        isGrounded_ = true;
-        
-        // Y方向の速度をリセット
-        velocity_.y = 0.0f;
+    // プレイヤーの位置を取得
+    Vector3 position = object_->GetPosition();
+    
+    // 天井との衝突の場合（法線が下向き）
+    if (info.normal.y < -0.7f) {
+        // Y方向の速度を反転
+        velocity_.y = -velocity_.y * 0.2f;
         
         // めり込み解消
-        Vector3 position = object_->GetPosition();
-        position.y += info.penetration;
+        position.y += info.normal.y * (info.penetration + 0.1f);
         object_->SetPosition(position);
+        return;
     }
-    // 側面衝突の場合
-    else if (std::abs(info.normal.y) < 0.8f) {
-        // 対応する方向の速度を0にしてめり込みを解消
-        Vector3 position = object_->GetPosition();
-        
+    
+    // 側面衝突の場合（法線のY成分が小さい）
+    if (std::abs(info.normal.y) < 0.7f) {
         // X方向の衝突
-        if (std::abs(info.normal.x) > 0.1f) {
+        if (std::abs(info.normal.x) > 0.3f) {
             velocity_.x = 0.0f;
-            position.x += info.normal.x * info.penetration;
+            position.x += info.normal.x * (info.penetration + 0.1f);
         }
         
         // Z方向の衝突
-        if (std::abs(info.normal.z) > 0.1f) {
+        if (std::abs(info.normal.z) > 0.3f) {
             velocity_.z = 0.0f;
-            position.z += info.normal.z * info.penetration;
+            position.z += info.normal.z * (info.penetration + 0.1f);
         }
         
-        // 位置の更新
         object_->SetPosition(position);
+        return;
     }
-    // 天井衝突の場合
-    else if (info.normal.y < -0.1f) {
-        // Y方向の速度を反転（わずかに）
-        velocity_.y = -velocity_.y * 0.1f;
+    
+    // 地面との衝突（法線が上向き）
+    if (info.normal.y > 0.7f) {
+        // 接地判定を有効にする
+        isGrounded_ = true;
         
-        // めり込み解消
-        Vector3 position = object_->GetPosition();
-        position.y += info.normal.y * info.penetration;
+        // Y方向の速度を完全に0にする
+        velocity_.y = 0.0f;
+        
+        // 地面の上に正確に配置（半径分の高さ）
+        position.y = 0.5f;
         object_->SetPosition(position);
+        return;
     }
 }

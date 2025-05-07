@@ -20,15 +20,15 @@ void Ground::Initialize(DirectXCommon* dxCommon, SpriteCommon* spriteCommon, Mod
     object_->Initialize(dxCommon, spriteCommon);
     object_->SetModel(model);
 
-    // コライダーの設定（平面モデルの大きさにあわせて調整）
-    collider_->SetHalfSize({ 5.0f, 0.1f, 5.0f }); // X, Y, Zの半分のサイズ
+    // コライダーの設定（OBJモデルの大きさにあわせて調整）
+    collider_->SetHalfSize({ 30.0f, 1.0f, 30.0f }); // OBJファイルのサイズに合わせて設定
     
     // コライダーを設定
     object_->SetCollider(collider_.get());
 
     // 初期位置と大きさの設定
     object_->SetPosition({ 0.0f, 0.0f, 0.0f });
-    object_->SetScale({ 10.0f, 0.2f, 10.0f });
+    object_->SetScale({ 1.0f, 1.0f, 1.0f }); // OBJファイルのスケールを維持
 }
 
 void Ground::Update() {
@@ -52,9 +52,8 @@ void Ground::SetScale(const Vector3& scale) {
     object_->SetScale(scale);
     
     // スケールに合わせてコライダーのサイズも更新
-    // ここではモデルの縦横比を考慮して調整
-    // X, Z方向はスケールの半分の値、Y方向は小さめに
-    collider_->SetHalfSize({ scale.x * 0.5f, scale.y * 0.5f, scale.z * 0.5f });
+    // Y方向は少し大きめに設定してすり抜けを防止
+    collider_->SetHalfSize({ scale.x * 30.0f, scale.y * 1.0f, scale.z * 30.0f });
 }
 
 const Vector3& Ground::GetScale() const {

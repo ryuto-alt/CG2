@@ -50,8 +50,9 @@ private:
 
     // 物理関連パラメータ
     Vector3 velocity_ = { 0.0f, 0.0f, 0.0f };
-    float gravity_ = 0.01f;
-    float jumpPower_ = 0.2f;
-    float moveSpeed_ = 0.1f;
+    float gravity_ = 0.025f;        // 重力値を大きく調整
+    float jumpPower_ = 0.4f;        // ジャンプ力を増加
+    float moveSpeed_ = 0.15f;       // 移動速度
     bool isGrounded_ = false;
+    float groundCheckMargin_ = 0.1f; // 地面チェック用のマージン
 };

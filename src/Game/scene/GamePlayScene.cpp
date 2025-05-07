@@ -64,8 +64,8 @@ void GamePlayScene::Initialize() {
     ground_->Initialize(dxCommon_, spriteCommon_, groundModel_.get());
     
     // 地面の位置とスケールを設定
-    ground_->SetPosition({ 0.0f, -1.0f, 0.0f });
-    ground_->SetScale({ 1.0f, 1.0f, 1.0f });
+    ground_->SetPosition({ 0.0f, -1.5f, 0.0f }); // 位置を少し下げて、プレイヤーが地面に正しく着地するようにする
+    ground_->SetScale({ 1.0f, 1.0f, 1.0f }); // 地面を大きくしてまた落ちないようにする
 
     // プレイヤーの初期位置を設定
     player_->SetPosition({ 0.0f, 5.0f, 0.0f });
