@@ -1,6 +1,5 @@
 #pragma once
-#include "CollisionObject3d.h"
-#include "BoxCollider.h"
+#include "../Engine/UnoEngine.h"
 #include <memory>
 
 // 地面クラス

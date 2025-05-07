@@ -1,7 +1,5 @@
 #pragma once
-#include "CollisionObject3d.h"
-#include "SphereCollider.h"
-#include "Input.h"
+#include "../Engine/UnoEngine.h"
 #include <memory>
 
 // プレイヤークラス

@@ -1,8 +1,7 @@
 #include <windows.h>
 #include <memory>
-#include "WinApp.h"
+#include "../Engine/UnoEngine.h"
 #include "MyGame.h"
-#include "D3DResourceCheck.h"
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     // リソースリーク検出用

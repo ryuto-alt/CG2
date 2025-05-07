@@ -3,12 +3,6 @@
 #include <memory>
 #include <string>
 #include "IScene.h"
-#include "WinApp.h"
-#include "DirectXCommon.h"
-#include "Input.h"
-#include "SpriteCommon.h"
-#include "SrvManager.h"
-#include "Camera.h"
 
 // 前方宣言
 class SceneFactory;

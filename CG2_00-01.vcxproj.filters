@@ -182,6 +182,9 @@
     <ClCompile Include="src\Game\Player.cpp">
       <Filter>src\Game</Filter>
     </ClCompile>
+    <ClCompile Include="src\Engine\UnoEngine.cpp">
+      <Filter>src\engine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="externals\imgui\imconfig.h">
@@ -333,6 +336,9 @@
     </ClInclude>
     <ClInclude Include="src\Game\Player.h">
       <Filter>src\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\UnoEngine.h">
+      <Filter>src\engine</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

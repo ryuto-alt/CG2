@@ -1,9 +1,9 @@
 #pragma once
 
 #include "IScene.h"
-#include "../Player.h"  // パスを修正
-#include "../Ground.h"  // パスを修正
-#include "PhysicsManager.h"
+#include "UnoEngine.h"
+#include "../Player.h"
+#include "../Ground.h"
 #include <memory>
 
 // ゲームプレイシーンクラス - 完全実装

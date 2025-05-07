@@ -2,14 +2,7 @@
 // シーンインターフェース（抽象クラス）
 #pragma once
 
-#include "DirectXCommon.h"
-#include "Input.h"
-#include "SpriteCommon.h"
-#include "TextureManager.h"
-#include "Camera.h"
-#include "SrvManager.h"
-#include "AudioManager.h"
-#include "WinApp.h"
+#include "../../Engine/UnoEngine.h"
 
 // 前方宣言
 class SceneManager;

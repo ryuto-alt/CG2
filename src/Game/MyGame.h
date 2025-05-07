@@ -1,18 +1,8 @@
 #pragma once
 
-#include "Framework.h"
-#include "DirectXCommon.h"
-#include "Input.h"
-#include "SpriteCommon.h"
-#include "TextureManager.h"
-#include "Camera.h"
-#include "SrvManager.h"
-#include "SceneManager.h"
-#include "SceneFactory.h"
-
-#include "imgui.h"
-#include "imgui_impl_dx12.h"
-#include "imgui_impl_win32.h"
+#include "../Engine/UnoEngine.h"
+#include "SceneConfig/SceneManager.h"
+#include "SceneConfig/SceneFactory.h"
 
 #include <memory> // unique_ptrを使用するために必要
 

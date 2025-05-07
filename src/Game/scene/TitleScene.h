@@ -1,9 +1,7 @@
 #pragma once
 
 #include "IScene.h"
-#include "Sprite.h"
-#include "Object3d.h"
-#include "Model.h"
+#include "UnoEngine.h"
 #include <memory>
 
 // タイトルシーンクラス
