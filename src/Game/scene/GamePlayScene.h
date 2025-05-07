@@ -38,6 +38,21 @@ private:
     // 初期化フラグ
     bool initialized_ = false;
 
+    // モデル初期化フラグ
+    bool modelInitialized_ = false;
+
     // カーソル表示フラグ
     bool showCursor_ = true;
+    
+    // 球体モデル
+    Model* sphereModel_ = nullptr;
+    
+    // 球体オブジェクト
+    Object3d* sphereObject_ = nullptr;
+    
+    // 回転角度
+    float rotationAngle_ = 0.0f;
+    
+    // モデル初期化処理
+    bool InitializeModel();
 };
