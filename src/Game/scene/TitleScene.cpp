@@ -1,9 +1,5 @@
 #include "TitleScene.h"
 #include "SceneManager.h"
-#include "TextureManager.h"
-#include "imgui.h"
-#include "imgui_impl_win32.h"
-#include "imgui_impl_dx12.h"
 #include <cassert>
 
 TitleScene::TitleScene() {
