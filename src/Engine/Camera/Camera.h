@@ -20,6 +20,11 @@ public:
     void SetAspectRatio(float aspectRatio);
     void SetNearClip(float nearClip);
     void SetFarClip(float farClip);
+    
+    // 注視点の設定 - 追加
+    void SetTarget(const Vector3& target);
+    // 注視点の取得 - 追加
+    const Vector3& GetTarget() const;
 
     // ゲッター
     const Matrix4x4& GetWorldMatrix() const;
@@ -38,6 +43,9 @@ private:
     Transform transform_;       // カメラのトランスフォーム
     Matrix4x4 worldMatrix_;     // カメラのワールド行列
     Matrix4x4 viewMatrix_;      // ビュー行列
+    
+    // 注視点（カメラが向いている方向）- 追加
+    Vector3 target_ = { 0.0f, 0.0f, 0.0f };
 
     // プロジェクション行列関連データ
     Matrix4x4 projectionMatrix_; // プロジェクション行列

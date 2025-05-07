@@ -48,6 +48,12 @@
     <Filter Include="src\Game\scene">
       <UniqueIdentifier>{ab838d56-9817-460e-80e1-344c346a53cd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\engine\Physics">
+      <UniqueIdentifier>{0b0b5332-4ada-41cd-9602-4842f2385e68}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Game\SceneConfig">
+      <UniqueIdentifier>{8c0ee1a1-c317-40c8-896a-ad479a570368}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="externals\imgui\imgui.cpp">
@@ -143,17 +149,38 @@
     <ClCompile Include="src\Engine\Core\Framework.cpp">
       <Filter>src\engine\Core</Filter>
     </ClCompile>
-    <ClCompile Include="src\Game\scene\SceneManager.cpp">
-      <Filter>src\Game\scene</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Game\scene\SceneFactory.cpp">
-      <Filter>src\Game\scene</Filter>
-    </ClCompile>
     <ClCompile Include="src\Game\scene\GamePlayScene.cpp">
       <Filter>src\Game\scene</Filter>
     </ClCompile>
     <ClCompile Include="src\Game\scene\TitleScene.cpp">
       <Filter>src\Game\scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Physics\BoxCollider.cpp">
+      <Filter>src\engine\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Physics\CollisionObject3d.cpp">
+      <Filter>src\engine\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Physics\PhysicsManager.cpp">
+      <Filter>src\engine\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Physics\PlaneCollider.cpp">
+      <Filter>src\engine\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Physics\SphereCollider.cpp">
+      <Filter>src\engine\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Game\SceneConfig\SceneFactory.cpp">
+      <Filter>src\Game\SceneConfig</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Game\SceneConfig\SceneManager.cpp">
+      <Filter>src\Game\SceneConfig</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Game\Ground.cpp">
+      <Filter>src\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Game\Player.cpp">
+      <Filter>src\Game</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -268,20 +295,44 @@
     <ClInclude Include="src\Engine\Core\Framework.h">
       <Filter>src\engine\Core</Filter>
     </ClInclude>
-    <ClInclude Include="src\Game\scene\IScene.h">
-      <Filter>src\Game\scene</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Game\scene\SceneManager.h">
-      <Filter>src\Game\scene</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Game\scene\SceneFactory.h">
-      <Filter>src\Game\scene</Filter>
-    </ClInclude>
     <ClInclude Include="src\Game\scene\GamePlayScene.h">
       <Filter>src\Game\scene</Filter>
     </ClInclude>
     <ClInclude Include="src\Game\scene\TitleScene.h">
       <Filter>src\Game\scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Physics\BoxCollider.h">
+      <Filter>src\engine\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Physics\Collider.h">
+      <Filter>src\engine\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Physics\CollisionObject3d.h">
+      <Filter>src\engine\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Physics\PhysicsManager.h">
+      <Filter>src\engine\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Physics\PlaneCollider.h">
+      <Filter>src\engine\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Physics\SphereCollider.h">
+      <Filter>src\engine\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\SceneConfig\IScene.h">
+      <Filter>src\Game\SceneConfig</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\SceneConfig\SceneFactory.h">
+      <Filter>src\Game\SceneConfig</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\SceneConfig\SceneManager.h">
+      <Filter>src\Game\SceneConfig</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\Ground.h">
+      <Filter>src\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\Player.h">
+      <Filter>src\Game</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -18,8 +18,8 @@ class Object3d {
 public:
     // コンストラクタ
     Object3d();
-    // デストラクタ
-    ~Object3d();
+    // デストラクタ - 仮想デストラクタに変更
+    virtual ~Object3d();
 
     // 初期化
     void Initialize(DirectXCommon* dxCommon, SpriteCommon* spriteCommon);
@@ -34,8 +34,8 @@ public:
     void SetCamera(Camera* camera);
     Camera* GetCamera() const;
 
-    // カメラを使用するUpdateメソッド
-    void Update();
+    // カメラを使用するUpdateメソッド - 仮想メソッドに変更
+    virtual void Update();
 
     // 座標の設定
     void SetPosition(const Vector3& position) { transform_.translate = position; }
@@ -61,7 +61,8 @@ public:
     void SetDirectionalLight(const DirectionalLight& light) { *directionalLightData_ = light; }
     const DirectionalLight& GetDirectionalLight() const { return *directionalLightData_; }
 
-private:
+protected:
+    // 継承先でアクセスできるようにprotectedに変更
     // モデル
     Model* model_;
 

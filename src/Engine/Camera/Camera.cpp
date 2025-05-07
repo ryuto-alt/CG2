@@ -14,6 +14,9 @@ Camera::Camera() :
     transform_.scale = { 1.0f, 1.0f, 1.0f };
     transform_.rotate = { 0.0f, 0.0f, 0.0f };
     transform_.translate = { 0.0f, 0.0f, -5.0f };
+    
+    // 注視点の初期化
+    target_ = { 0.0f, 0.0f, 0.0f };
 
     // 初期更新
     Update();
@@ -27,6 +30,29 @@ Camera::~Camera() {
 }
 
 void Camera::Update() {
+    // 注視点から視点へのベクトルを計算
+    Vector3 eyeToTarget = {
+        target_.x - transform_.translate.x,
+        target_.y - transform_.translate.y,
+        target_.z - transform_.translate.z
+    };
+    
+    // 視点が注視点と完全に重なる場合の処理
+    float eyeToTargetLength = std::sqrt(
+        eyeToTarget.x * eyeToTarget.x + 
+        eyeToTarget.y * eyeToTarget.y + 
+        eyeToTarget.z * eyeToTarget.z);
+    
+    if (eyeToTargetLength < 0.001f) {
+        // デフォルトの前方ベクトルを設定
+        eyeToTarget = { 0.0f, 0.0f, 1.0f };
+    } else {
+        // 正規化
+        eyeToTarget.x /= eyeToTargetLength;
+        eyeToTarget.y /= eyeToTargetLength;
+        eyeToTarget.z /= eyeToTargetLength;
+    }
+    
     // ワールド行列の計算
     worldMatrix_ = MakeAffineMatrix(transform_.scale, transform_.rotate, transform_.translate);
 
@@ -63,6 +89,16 @@ void Camera::SetNearClip(float nearClip) {
 
 void Camera::SetFarClip(float farClip) {
     farClip_ = farClip;
+}
+
+// 注視点の設定
+void Camera::SetTarget(const Vector3& target) {
+    target_ = target;
+}
+
+// 注視点の取得
+const Vector3& Camera::GetTarget() const {
+    return target_;
 }
 
 // ゲッター
