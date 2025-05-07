@@ -125,6 +125,13 @@ void Player::UpdatePhysics() {
     // 位置を取得
     Vector3 position = object_->GetPosition();
     
+    // ground.objの範囲を超えているかどうかをチェック
+    float groundHalfWidth = 30.0f;
+    if (std::abs(position.x) > groundHalfWidth || std::abs(position.z) > groundHalfWidth) {
+        // 地面の外にいる場合は強制的に接地フラグをオフにする
+        isGrounded_ = false;
+    }
+    
     // 接地していない場合のみ重力を適用
     if (!isGrounded_) {
         // 重力を大きくして落下感を増す
@@ -150,9 +157,22 @@ void Player::UpdatePhysics() {
         position.z += velocity_.z;
         object_->SetPosition(position);
         
+        // 再度地面の範囲チェック
+        if (std::abs(position.x) > groundHalfWidth || std::abs(position.z) > groundHalfWidth) {
+            // 地面の外に出た場合は接地フラグをオフに
+            isGrounded_ = false;
+        }
+        
         // 衝突判定を行う
         object_->Update();
-        return; // ここで処理終了
+        
+        // 地面外に出た場合は継続して落下処理を行う
+        if (!isGrounded_) {
+            // すでに位置更新済みなので、Y方向のみ計算継続
+            velocity_.y -= gravity_;
+        } else {
+            return; // ここで処理終了（地面内で安定している場合）
+        }
     }
     
     // 非接地の場合は通常かつ行分割した移動処理
@@ -166,8 +186,10 @@ void Player::UpdatePhysics() {
     
     // 分割した各ステップで移動と衝突判定を行う
     for (int i = 0; i < steps; i++) {
-        // 前の反復で接地した場合は処理を終了
-        if (isGrounded_) {
+        // 前の反復で接地した場合、かつ地面の範囲内なら処理を終了
+        if (isGrounded_ && 
+            std::abs(position.x) <= groundHalfWidth && 
+            std::abs(position.z) <= groundHalfWidth) {
             break;
         }
         
@@ -179,6 +201,12 @@ void Player::UpdatePhysics() {
         // 位置を反映
         object_->SetPosition(position);
         
+        // 地面の範囲を超えているかどうかを再度チェック
+        if (std::abs(position.x) > groundHalfWidth || std::abs(position.z) > groundHalfWidth) {
+            // 地面の外にいる場合は強制的に接地フラグをオフにする
+            isGrounded_ = false;
+        }
+        
         // 衝突判定を行う
         object_->Update();
     }
@@ -187,6 +215,15 @@ void Player::UpdatePhysics() {
 void Player::OnCollision(const Collider::CollisionInfo& info) {
     // プレイヤーの位置を取得
     Vector3 position = object_->GetPosition();
+    
+    // プレイヤーが地面の外にいるか確認
+    // ground.objの横幅は-30〜30なので、その範囲外なら接地させない
+    float groundHalfWidth = 30.0f;
+    if (std::abs(position.x) > groundHalfWidth || std::abs(position.z) > groundHalfWidth) {
+        // 地面の外にいる場合は接地させない
+        isGrounded_ = false;
+        return;
+    }
     
     // 天井との衝突の場合（法線が下向き）
     if (info.normal.y < -0.7f) {
