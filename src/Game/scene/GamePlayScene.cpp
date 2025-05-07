@@ -1,9 +1,9 @@
 #include "GamePlayScene.h"
 #include "SceneManager.h"
-#include <cassert>
 
 GamePlayScene::GamePlayScene() {
-    // コンストラクタは空のままにする
+    // UnoEngineのインスタンス取得
+    engine_ = Uno::UnoEngine::GetInstance();
 }
 
 GamePlayScene::~GamePlayScene() {
@@ -12,7 +12,6 @@ GamePlayScene::~GamePlayScene() {
 
 void GamePlayScene::Initialize() {
     // 必須のリソースチェック
-    assert(dxCommon_);
     assert(input_);
     assert(camera_);
 
@@ -40,7 +39,7 @@ void GamePlayScene::Update() {
     if (input_->TriggerKey(DIK_ESCAPE)) {
         // マウスカーソルを表示に戻す
         input_->SetMouseCursor(true);
-        sceneManager_->ChangeScene("Title");
+        SceneManager::GetInstance()->ChangeScene("Title");
     }
 
     // TABキーでマウスカーソルの表示切替
@@ -51,14 +50,50 @@ void GamePlayScene::Update() {
 }
 
 void GamePlayScene::ControlCamera() {
-    // 基本的なWASDキー操作のみ実装
+    // WASD基本移動操作
     Vector3 cameraPos = camera_->GetTranslate();
+
+    if (input_->PushKey(DIK_W)) {
+        cameraPos.z += 0.1f;
+    }
+    if (input_->PushKey(DIK_S)) {
+        cameraPos.z -= 0.1f;
+    }
+    if (input_->PushKey(DIK_A)) {
+        cameraPos.x -= 0.1f;
+    }
+    if (input_->PushKey(DIK_D)) {
+        cameraPos.x += 0.1f;
+    }
+
+    // 上下移動
+    if (input_->PushKey(DIK_SPACE)) {
+        cameraPos.y += 0.1f;
+    }
+    if (input_->PushKey(DIK_LCONTROL)) {
+        cameraPos.y -= 0.1f;
+    }
 
     camera_->SetTranslate(cameraPos);
 }
 
 void GamePlayScene::Draw() {
+    // 特に何も描画しない（必要に応じて3Dオブジェクトやスプライトを追加）
+    DrawImGui();
+}
 
+void GamePlayScene::DrawImGui() {
+    // ImGuiウィンドウ
+    // ImGuiのフレームは MyGame::Draw() で開始されていることを前提とします
+    ImGui::Begin("GamePlayScene");
+    ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+    ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)",
+        camera_->GetTranslate().x,
+        camera_->GetTranslate().y,
+        camera_->GetTranslate().z);
+    ImGui::Checkbox("Show Cursor", &showCursor_);
+    ImGui::Text("Press ESC to return to Title");
+    ImGui::End();
 }
 
 void GamePlayScene::Finalize() {

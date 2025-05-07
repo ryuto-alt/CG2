@@ -1,13 +1,9 @@
 #include "TitleScene.h"
 #include "SceneManager.h"
-#include "TextureManager.h"
-#include "imgui.h"
-#include "imgui_impl_win32.h"
-#include "imgui_impl_dx12.h"
-#include <cassert>
 
 TitleScene::TitleScene() {
-    // コンストラクタでの初期化は最小限にする
+    // UnoEngineのインスタンス取得
+    engine_ = Uno::UnoEngine::GetInstance();
 }
 
 TitleScene::~TitleScene() {
@@ -21,9 +17,6 @@ void TitleScene::Initialize() {
     assert(spriteCommon_);
     assert(srvManager_);
     assert(camera_);
-
-    // ImGuiの初期化
-    InitializeImGui();
 
     // 3Dモデルの初期化
     Initialize3DModels();
@@ -39,7 +32,7 @@ void TitleScene::Initialize() {
 }
 
 void TitleScene::InitializeImGui() {
-    // ImGuiの設定（必要に応じて）
+    // ImGuiはUnoEngineで初期化済みなので、ここでは特に何もしない
 }
 
 void TitleScene::Initialize3DModels() {
@@ -73,7 +66,7 @@ void TitleScene::InitializeSprites() {
     try {
         titleLogo_ = std::make_unique<Sprite>();
         titleLogo_->Initialize(spriteCommon_, "Resources/textures/title_logo.png");
-        titleLogo_->SetPosition({ WinApp::kClientWidth / 2.0f, 200.0f });
+        titleLogo_->SetPosition({ static_cast<float>(Uno::UnoEngine::GetClientWidth()) / 2.0f, 200.0f });
         titleLogo_->SetSize({ 600.0f, 150.0f });
         titleLogo_->SetAnchorPoint({ 0.5f, 0.5f });
     }
@@ -86,9 +79,6 @@ void TitleScene::InitializeSprites() {
 void TitleScene::Update() {
     // 初期化されていない場合は何もしない
     if (!initialized_) return;
-
-    // カメラの更新
-    camera_->Update();
 
     // オブジェクトの回転
     rotationAngle_ += 0.01f;
@@ -104,16 +94,13 @@ void TitleScene::Update() {
 
     // スペースキーでゲームプレイシーンへ遷移
     if (input_->TriggerKey(DIK_SPACE)) {
-        sceneManager_->ChangeScene("GamePlay");
+        SceneManager::GetInstance()->ChangeScene("GamePlay");
     }
 }
 
 void TitleScene::Draw() {
     // 初期化されていない場合は何もしない
     if (!initialized_) return;
-
-    // 3Dオブジェクトの描画準備（SRVヒープの設定）
-    srvManager_->PreDraw();
 
     // 3Dオブジェクトの描画
     sphereObject_->Draw();
@@ -131,13 +118,11 @@ void TitleScene::Draw() {
 }
 
 void TitleScene::DrawImGui() {
-    // ImGuiの新しいフレーム開始
-    ImGui_ImplDX12_NewFrame();
-    ImGui_ImplWin32_NewFrame();
-    ImGui::NewFrame();
-
+    // ImGuiフレームが既に開始されていることを前提としています
+    // UnoEngineのBeginFrameでImGui::NewFrame()が呼ばれています
+    
     // タイトル表示用の大きなウィンドウ
-    ImGui::SetNextWindowPos(ImVec2(WinApp::kClientWidth / 2 - 150, 100), ImGuiCond_Once);
+    ImGui::SetNextWindowPos(ImVec2(static_cast<float>(Uno::UnoEngine::GetClientWidth()) / 2 - 150, 100), ImGuiCond_Once);
     ImGui::SetNextWindowSize(ImVec2(300, 100), ImGuiCond_Once);
     ImGui::Begin("##Title", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
     ImGui::SetWindowFontScale(2.0f);
@@ -154,10 +139,6 @@ void TitleScene::DrawImGui() {
         camera_->GetTranslate().z);
     ImGui::Text("Rotation Angle: %.2f", rotationAngle_);
     ImGui::End();
-
-    // ImGuiの描画
-    ImGui::Render();
-    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), dxCommon_->GetCommandList());
 }
 
 void TitleScene::Finalize() {

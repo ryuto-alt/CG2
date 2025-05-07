@@ -1,37 +1,43 @@
 #pragma once
 
+// UnoEngineのみをインクルード
+#include "UnoEngine.h"
 #include "IScene.h"
-#include <memory>
 
-// ゲームプレイシーンクラス - 基本実装
 class GamePlayScene : public IScene {
 public:
     // コンストラクタ
     GamePlayScene();
 
     // デストラクタ
-    ~GamePlayScene() override;
+    ~GamePlayScene();
 
     // 初期化
-    void Initialize() override;
+    void Initialize();
 
     // 更新
-    void Update() override;
+    void Update();
 
     // 描画
-    void Draw() override;
+    void Draw();
 
     // 終了処理
-    void Finalize() override;
+    void Finalize();
 
 private:
-    // カメラ操作（最小限）
+    // カメラ操作
     void ControlCamera();
+    
+    // ImGui描画
+    void DrawImGui();
 
 private:
+    // UnoEngineへの参照
+    Uno::UnoEngine* engine_ = nullptr;
+
     // 初期化フラグ
     bool initialized_ = false;
 
-    // ESCキーでタイトルに戻るための機能を残す
+    // カーソル表示フラグ
     bool showCursor_ = true;
 };

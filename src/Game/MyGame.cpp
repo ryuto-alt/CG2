@@ -139,6 +139,11 @@ void MyGame::Update() {
 
 void MyGame::Draw() {
     try {
+        // ImGuiの新規フレーム開始
+        ImGui_ImplDX12_NewFrame();
+        ImGui_ImplWin32_NewFrame();
+        ImGui::NewFrame();
+
         // DirectXの描画準備
         dxCommon_->Begin();
 
@@ -152,6 +157,10 @@ void MyGame::Draw() {
 
         // パーティクルの描画
         ParticleManager::GetInstance()->Draw();
+
+        // ImGuiの描画
+        ImGui::Render();
+        ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), dxCommon_->GetCommandList());
 
         // 描画終了
         dxCommon_->End();

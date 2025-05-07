@@ -1,31 +1,28 @@
 #pragma once
 
+// UnoEngineのみをインクルード
+#include "UnoEngine.h"
 #include "IScene.h"
-#include "Sprite.h"
-#include "Object3d.h"
-#include "Model.h"
-#include <memory>
 
-// タイトルシーンクラス
 class TitleScene : public IScene {
 public:
     // コンストラクタ
     TitleScene();
 
     // デストラクタ
-    ~TitleScene() override;
+    ~TitleScene();
 
     // 初期化
-    void Initialize() override;
+    void Initialize();
 
     // 更新
-    void Update() override;
+    void Update();
 
     // 描画
-    void Draw() override;
+    void Draw();
 
     // 終了処理
-    void Finalize() override;
+    void Finalize();
 
 private:
     // ImGuiの初期化
@@ -41,6 +38,9 @@ private:
     void DrawImGui();
 
 private:
+    // UnoEngineへの参照
+    Uno::UnoEngine* engine_ = nullptr;
+
     // シーンの状態管理
     bool initialized_ = false;
 
